@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Tap Elephant — Тапни будущее</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    html, body { overscroll-behavior: contain; }
+    :root {
+      --accent: #2dc6c6;
+      --accent-dark: #129999;
+      --glass: rgba(255,255,255,.58);
+      --glass-soft: rgba(255,255,255,.38);
+      --line: rgba(45,198,198,.26);
+      --text-soft: #4a5b63;
+    }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(900px 540px at 10% -10%, rgba(45,198,198,.34), transparent 56%),
+        radial-gradient(800px 440px at 100% 0%, rgba(45,198,198,.14), transparent 54%),
+        linear-gradient(180deg, #f8ffff 0%, #effbfb 55%, #f7ffff 100%),
+        var(--tg-theme-bg-color, #ffffff);
+      color: var(--tg-theme-text-color, #111);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+    }
+    button, a { -webkit-tap-highlight-color: rgba(0,0,0,0); }
+
+    .main-content { flex: 1; padding: 14px 14px 90px; overflow-y: auto; }
+    .tab-view { display: none; animation: fade .2s ease; }
+    .tab-view.active { display: block; }
+    @keyframes fade { from {opacity:0; transform: translateY(4px);} to {opacity:1; transform:none;} }
+
+    .card {
+      background: linear-gradient(180deg, var(--glass), var(--glass-soft));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 16px;
+      margin-bottom: 14px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 28px rgba(17, 121, 121, .12);
+    }
+    .title { font-weight: 800; margin-bottom: 10px; font-size: 18px; }
+    .pill {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      border: 1px solid rgba(45,198,198,.28);
+      background: rgba(255,255,255,.62);
+      border-radius: 18px; padding: 8px 12px;
+    }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 10px; }
+    .stat-item { background: rgba(255,255,255,.72); border: 1px solid rgba(45,198,198,.24); border-radius: 16px; padding: 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.62); }
+    .stat-value { font-weight: 900; color: var(--tg-theme-button-color, var(--accent)); font-size: 26px; }
+    .stat-label { font-size: 12px; color: var(--text-soft); }
+
+    .energy-wrap { margin: 8px 0 12px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .progress { height: 10px; border-radius: 999px; overflow: hidden; background: rgba(45,198,198,.16); margin-top: 8px; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg,var(--accent),var(--accent-dark)); transition: width .2s ease; }
+
+    .tap-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0 2px;
+    }
+    .tap-button {
+      --ring: 0%;
+      width: 228px; height: 228px; margin: 14px auto 12px;
+      border-radius: 50%; border: none; color: #fff; font-size: 64px; cursor: pointer;
+      background: radial-gradient(circle at 30% 25%, #73eaea 0%, var(--accent) 45%, var(--accent-dark) 100%);
+      position: relative;
+      box-shadow: 0 12px 0 rgba(11,120,120,.35), 0 24px 46px rgba(45,198,198,.34);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tap-button::before {
+      content: ""; position: absolute; inset: -16px; border-radius: 50%; z-index: -1;
+      background: conic-gradient(var(--accent) var(--ring), rgba(45,198,198,.2) var(--ring));
+      filter: drop-shadow(0 0 14px rgba(45,198,198,.4));
+    }
+    .tap-button::after {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.45);
+      pointer-events: none;
+    }
+    .tap-button:active { transform: none; }
+    .tap-pulse { animation: pulse .22s ease-out; }
+    @keyframes pulse { 0%{filter:brightness(1)} 60%{filter:brightness(1.08)} 100%{filter:brightness(1)} }
+    .tap-hint { font-size: 12px; color: var(--text-soft); margin-bottom: 4px; }
+    .next-level-card {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+      background: rgba(255,255,255,.66);
+      border: 1px solid rgba(45,198,198,.26);
+      border-radius: 18px;
+      padding: 12px;
+    }
+
+    .btn {
+      border: none; border-radius: 40px; padding: 9px 14px; cursor: pointer;
+      background: var(--tg-theme-button-color, var(--accent)); color: #fff; font-size: 13px;
+      box-shadow: 0 8px 18px rgba(45,198,198,.28);
+    }
+    .btn.disabled { opacity: .5; pointer-events: none; }
+
+    .list-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: rgba(255,255,255,.66);
+      border: 1px solid rgba(45,198,198,.2);
+      border-radius: 16px; padding: 10px 12px; margin-bottom: 10px;
+    }
+    .small { font-size: 12px; color: var(--text-soft); }
+    .float-number {
+      position: fixed; pointer-events: none; z-index: 1000;
+      font-size: 22px; font-weight: 900; color: var(--accent);
+      background: rgba(255,255,255,.72); border: 1px solid rgba(45,198,198,.28); border-radius: 16px; padding: 6px 10px;
+      animation: floatUp .6s ease-out forwards;
+    }
+    @keyframes floatUp { from {opacity:1; transform:translateY(0)} to {opacity:0; transform:translateY(-46px)} }
+
+    .bottom-nav {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 100;
+      display: flex; justify-content: space-around; gap: 4px;
+      padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(255,255,255,.72); border-top: 1px solid rgba(45,198,198,.24); backdrop-filter: blur(12px);
+    }
+    .nav-item {
+      min-width: 64px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: none; border: 1px solid transparent; border-radius: 14px; padding: 4px 6px;
+      color: var(--tg-theme-hint-color, #888); cursor: pointer; font-size: 11px;
+    }
+    .nav-item.active { color: var(--accent); background: rgba(45,198,198,.16); border-color: rgba(45,198,198,.3); }
+    .nav-icon { font-size: 20px; }
+    @media (max-width: 420px) {
+      .tap-button { width: 206px; height: 206px; font-size: 58px; }
+    }
+  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="main-content">
+    <!-- TAP -->
+    <div id="tapTab" class="tab-view active">
+      <div class="card">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="tapCount">0</div>
+            <div class="stat-label">Баланс</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="multiplierDisplay">1.0</div>
+            <div class="stat-label">За 1 тап</div>
+          </div>
+        </div>
+        <div class="pill" id="elephantLevelPill" style="width:100%; margin-bottom:10px;">🐘 Базовый слоняра</div>
+
+        <div class="energy-wrap">
+          <div class="row">
+            <div class="pill">⚡ Энергия: <span id="energyValue">1000</span>/<span id="energyMaxValue">1000</span></div>
+            <div class="small">+<span id="energyRegenValue">1</span>/сек</div>
+          </div>
+          <div class="progress"><div id="energyFill" class="progress-fill"></div></div>
+        </div>
+
+        <div class="tap-hero">
+          <button id="tapBtn" class="tap-button">🐘</button>
+          <div class="tap-hint">Тапай слона и прокачивай уровень</div>
+        </div>
+
+        <div class="next-level-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <span style="font-weight:700;">До следующей слоняры</span>
+            <b id="remainingToNext">1000</b>
+          </div>
+          <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+        </div>
+
+        <div id="doubleTimer" class="pill small" style="display:none; width:100%;"></div>
+      </div>
+    </div>
+
+    <!-- BOOSTS -->
+    <div id="boostsTab" class="tab-view">
+      <div class="card">
+        <div class="title">⚡ Временный бонус</div>
+        <div class="list-item">
+          <div>
+            <div style="font-weight:800;">Удвоение x2</div>
+            <div class="small">За подписку на канал</div>
+          </div>
+          <button id="subscribeBtn" class="btn">Подписаться</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="title">📈 Улучшения</div>
+        <div id="upgradesList"></div>
+      </div>
+      <div class="card">
+        <div class="title">⚡ Энергия</div>
+        <div id="energyUpgradesList"></div>
+      </div>
+      <div class="card">
+        <div class="title">📋 Задания</div>
+        <div id="tasksList"></div>
+      </div>
+    </div>
+
+    <!-- RATING -->
+    <div id="ratingTab" class="tab-view">
+      <div class="card">
+        <div class="title">🏆 Рейтинг партий</div>
+        <div class="list-item"><span>Твои очки</span><b id="newPeopleScore">0</b></div>
+        <div id="factionPill" class="pill" style="width:100%; margin-bottom:8px; border-color: rgba(45,198,198,.55); background: rgba(45,198,198,.18);">🤝 Наша партия: 🆕 Новые люди</div>
+        <div id="currentBossPill" class="pill" style="width:100%; margin-bottom:8px;">Текущий босс: —</div>
+        <div class="small" id="partyPlaceText">Место в рейтинге партий: —</div>
+        <div class="small" id="factionProgressText">До следующего босса: 0</div>
+        <div class="progress"><div id="factionProgressFill" class="progress-fill"></div></div>
+        <div class="small" style="margin-top:10px;">Рейтинг партий (обновляется)</div>
+        <div id="partyRatingList" style="margin-top:8px;"></div>
+        <div class="small" style="margin-top:10px;">Боссы-соперники</div>
+        <div id="factionBossesList" style="margin-top:8px;"></div>
+      </div>
+      <div class="card">
+        <div class="title">Топ-15</div>
+        <div id="leaderboardList"></div>
+      </div>
+    </div>
+
+    <!-- FRIENDS -->
+    <div id="friendsTab" class="tab-view">
+      <div class="card">
+        <div class="title">🎁 Друзья</div>
+        <div class="list-item"><span>Рефералов</span><b id="referralCount">0</b></div>
+        <div class="small" style="margin:4px 0 10px;">За каждого реферала +5</div>
+        <button id="inviteFriendsBtn" class="btn" style="width:100%; margin-bottom:10px;">Пригласить друга</button>
+        <div class="small">В игре</div>
+        <div id="referralsList" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="profileTab" class="tab-view">
+      <div class="card">
+        <div class="row" style="justify-content:flex-start; gap:12px; margin-bottom:12px;">
+          <div id="profileAvatar" class="pill" style="width:52px; height:52px; border-radius:50%; font-size:22px;">🐘</div>
+          <div id="profileName" style="font-size:18px; font-weight:800;">Загрузка...</div>
+        </div>
+        <div class="list-item"><span>Всего тапов</span><b id="profileTaps">0</b></div>
+        <div id="achievementsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" data-tab="tap"><span class="nav-icon">🐘</span><span>Тап</span></button>
+    <button class="nav-item" data-tab="boosts"><span class="nav-icon">⚡</span><span>Улучшения</span></button>
+    <button class="nav-item" data-tab="rating"><span class="nav-icon">🏆</span><span>Рейтинг</span></button>
+    <button class="nav-item" data-tab="friends"><span class="nav-icon">🎁</span><span>Друзья</span></button>
+    <button class="nav-item" data-tab="profile"><span class="nav-icon">👤</span><span>Профиль</span></button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.enableClosingConfirmation();
+    tg.MainButton.hide();
+
+    const BACKEND_BASE_URL = 'https://tap-backend-ivm6.onrender.com'; // <- замени на свой backend
+    const API = {
+      report: `${BACKEND_BASE_URL}/api/party-taps/report`,
+      me: `${BACKEND_BASE_URL}/api/me/new-people-faction`,
+      top: `${BACKEND_BASE_URL}/api/leaderboard/new-people?limit=15`,
+      refs: `${BACKEND_BASE_URL}/api/referrals/me`,
+      subCheck: `${BACKEND_BASE_URL}/api/check-subscription`,
+      registerReferral: `${BACKEND_BASE_URL}/api/referrals/register`,
+      createInvite: `${BACKEND_BASE_URL}/api/referrals/invite`
+    };
+
+    const user = tg.initDataUnsafe?.user;
+    const userId = user?.id ? String(user.id) : 'guest';
+    const userName = user ? `${user.first_name || 'Пользователь'}${user.last_name ? ' ' + user.last_name : ''}` : 'Гость';
+    const startParam = tg.initDataUnsafe?.start_param;
+
+    // Регистрация реферала при старте мини-приложения (с защитой от дублей)
+    async function registerStartParamReferral() {
+      if (!startParam) return;
+      if (!startParam.startsWith('invite_') && !startParam.startsWith('ref_')) return;
+      const refRegKey = `refReg:${userId}:${startParam}`;
+      if (localStorage.getItem(refRegKey) === '1') return;
+      const payload = { userId, userName, startParam };
+      if (startParam.startsWith('ref_')) {
+        const referrerId = startParam.slice(4);
+        if (!referrerId || referrerId === userId) return;
+        payload.referrerId = referrerId;
+      }
+      try {
+        const r = await fetch(API.registerReferral, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!r.ok) return;
+        localStorage.setItem(refRegKey, '1');
+      } catch (_) {}
+    }
+
+    const state = {
+      taps: 0,
+      totalEarned: 0,
+      baseMultiplier: 1,
+      purchasedUpgrades: [],
+      doubleActive: false,
+      doubleEndTime: 0,
+      energy: 1000,
+      energyLastUpdate: Date.now(),
+      purchasedEnergyUpgrades: [],
+      referralsClaimed: 0
+    };
+
+    const thresholds = [
+      { value: 1000, bonus: 1, name: '1 000 тапов' },
+      { value: 100000, bonus: 1, name: '100 000 тапов' },
+      { value: 1000000, bonus: 1, name: '1 000 000 тапов' },
+      { value: 100000000, bonus: 1, name: '100 000 000 тапов' }
+    ];
+    const elephantLevels = [
+      { min: 0, label: 'Базовый слоняра', icon: '🐘' },
+      { min: 1000, label: 'Слоняра средний', icon: '🐘✨' },
+      { min: 100000, label: 'Слоняра высший', icon: '🐘👑' },
+      { min: 1000000, label: 'Слоняра легендарный', icon: '🐘🏆' }
+    ];
+    const factionLevels = [
+      { min: 0, name: 'Новые люди', icon: '🆕' },
+      { min: 1000000, name: 'Справедливая Россия', icon: '🇷🇺' },
+      { min: 10000000, name: 'Яблоко', icon: '🍏' },
+      { min: 100000000, name: 'КПРФ', icon: '🌹' },
+      { min: 500000000, name: 'ЛДПР', icon: '🦁' },
+      { min: 1500000000000, name: 'Единая Россия', icon: '👑' }
+    ];
+    const PARTY_SEASON_START_UTC = '2026-03-30T00:00:00Z';
+    const DAILY_RIVAL_GROWTH = 500000;
+    const rivalParties = [
+      { name: 'КПРФ', icon: '🌹', baseScore: 1500000 },
+      { name: 'ЛДПР', icon: '🦁', baseScore: 1300000 },
+      { name: 'Единая Россия', icon: '👑', baseScore: 1800000 },
+      { name: 'Справедливая Россия', icon: '🇷🇺', baseScore: 1100000 },
+      { name: 'Яблоко', icon: '🍏', baseScore: 1000000 }
+    ];
+    const upgrades = [
+      { id: 0, price: 100, bonus: 0.1, name: 'x1.1', desc: '+0.1 к множителю' },
+      { id: 1, price: 500, bonus: 0.1, name: 'x1.2', desc: '+0.1 к множителю' },
+      { id: 2, price: 1000, bonus: 0.1, name: 'x1.3', desc: '+0.1 к множителю' },
+      { id: 3, price: 5000, bonus: 0.1, name: 'x1.4', desc: '+0.1 к множителю' },
+      { id: 4, price: 25000, bonus: 0.1, name: 'x1.5', desc: '+0.1 к множителю' }
+    ];
+    const energyUpgrades = [
+      { id: 0, price: 2000, addMax: 500, addRegen: 0, name: 'Макс +500' },
+      { id: 1, price: 7000, addMax: 0, addRegen: 1, name: 'Реген +1/с' },
+      { id: 2, price: 20000, addMax: 1000, addRegen: 0, name: 'Макс +1000' },
+      { id: 3, price: 45000, addMax: 0, addRegen: 2, name: 'Реген +2/с' }
+    ];
+    const tasks = [
+      { id: 'subscribe', title: 'Подпишись на канал', desc: 'Бонус x2 на 30 секунд', icon: '⚡' },
+      { id: 't1', title: 'Собери 1000', desc: 'Награда +50', icon: '🐘', cond: () => state.taps >= 1000, reward: 50 },
+      { id: 't2', title: 'Купи 1 апгрейд', desc: 'Награда +100', icon: '📈', cond: () => state.purchasedUpgrades.length > 0, reward: 100 }
+    ];
+    const completedTasks = {};
+
+    const $ = (id) => document.getElementById(id);
+    const tapBtn = $('tapBtn');
+
+    function formatNumber(n) {
+      const x = Math.round(Number(n) || 0);
+      if (x >= 1e9) return Math.round(x / 1e9) + 'B';
+      if (x >= 1e6) return Math.round(x / 1e6) + 'M';
+      if (x >= 1e3) return Math.round(x / 1e3) + 'K';
+      return String(x);
+    }
+    function save() {
+      localStorage.setItem('tapElephant', JSON.stringify({ state, completedTasks }));
+    }
+    function load() {
+      try {
+        const raw = localStorage.getItem('tapElephant');
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (data.state) Object.assign(state, data.state);
+        if (data.completedTasks) Object.assign(completedTasks, data.completedTasks);
+      } catch (_) {}
+    }
+    function totalMult() {
+      let up = 0;
+      for (const id of state.purchasedUpgrades) {
+        const u = upgrades.find(x => x.id === id);
+        if (u) up += u.bonus;
+      }
+      return Math.max(1, state.baseMultiplier + up);
+    }
+    function getEnergyMax() {
+      let extra = 0;
+      for (const id of state.purchasedEnergyUpgrades) {
+        const u = energyUpgrades.find(x => x.id === id);
+        if (u) extra += u.addMax || 0;
+      }
+      return 1000 + extra;
+    }
+    function getEnergyRegen() {
+      let extra = 0;
+      for (const id of state.purchasedEnergyUpgrades) {
+        const u = energyUpgrades.find(x => x.id === id);
+        if (u) extra += u.addRegen || 0;
+      }
+      return 1 + extra;
+    }
+    function replenishEnergy() {
+      const now = Date.now();
+      const dt = Math.max(0, (now - (state.energyLastUpdate || now)) / 1000);
+      state.energyLastUpdate = now;
+      state.energy = Math.min(getEnergyMax(), Math.floor((state.energy || 0) + dt * getEnergyRegen()));
+    }
+    function checkThresholds() {
+      let b = 1;
+      for (const th of thresholds) {
+        if (state.taps >= th.value) b += th.bonus; else break;
+      }
+      state.baseMultiplier = b;
+    }
+    function elephantLevel() {
+      let c = elephantLevels[0];
+      for (const lv of elephantLevels) if (state.taps >= lv.min) c = lv;
+      return c;
+    }
+    function nextElephant() {
+      for (const lv of elephantLevels) if (state.taps < lv.min) return lv;
+      return null;
+    }
+    function seasonDaysPassed() {
+      const startMs = new Date(PARTY_SEASON_START_UTC).getTime();
+      const nowMs = Date.now();
+      if (!Number.isFinite(startMs) || nowMs <= startMs) return 0;
+      return Math.floor((nowMs - startMs) / 86400000);
+    }
+    function buildPartyScores(newPeopleScore) {
+      const days = seasonDaysPassed();
+      const parties = [{ name: 'Новые люди', icon: '🆕', score: Math.max(0, Math.round(Number(newPeopleScore) || 0)) }];
+      for (const p of rivalParties) {
+        parties.push({
+          name: p.name,
+          icon: p.icon,
+          score: Math.max(0, Math.round(p.baseScore + days * DAILY_RIVAL_GROWTH))
+        });
+      }
+      return parties.sort((a, b) => b.score - a.score);
+    }
+    function renderPartyRating(parties) {
+      const box = $('partyRatingList');
+      if (!box) return;
+      const newPeopleIdx = parties.findIndex((p) => p.name === 'Новые люди');
+      const place = newPeopleIdx >= 0 ? newPeopleIdx + 1 : parties.length;
+      $('partyPlaceText').textContent = `Место в рейтинге партий: ${place} из ${parties.length}`;
+      box.innerHTML = parties.map((p, i) => {
+        const isUs = p.name === 'Новые люди';
+        return `<div class="list-item" ${isUs ? 'style="border-color: rgba(45,198,198,.55); background: rgba(45,198,198,.14);"' : ''}>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="pill" style="min-width:34px; padding:4px 8px;">${i + 1}</div>
+            <span>${p.icon} ${p.name}${isUs ? ' (мы)' : ''}</span>
+          </div>
+          <b style="color:#2dc6c6;">${formatNumber(p.score)}</b>
+        </div>`;
+      }).join('');
+    }
+    function renderFactionBosses(myScore, parties) {
+      const box = $('factionBossesList');
+      if (!box) return;
+      const newPeoplePos = parties.findIndex((p) => p.name === 'Новые люди');
+      const opponents = parties.filter((p) => p.name !== 'Новые люди');
+      box.innerHTML = opponents.map((p) => {
+        const oppPos = parties.findIndex((x) => x.name === p.name);
+        const isAhead = oppPos < newPeoplePos;
+        const isNext = newPeoplePos > 0 && oppPos === newPeoplePos - 1;
+        const bg = isNext ? 'background: rgba(255,255,255,.2); border-color: rgba(45,198,198,.45);' : '';
+        const gap = Math.abs(p.score - myScore);
+        const status = isAhead ? `🎯 Впереди на ${formatNumber(gap)}` : `✅ Позади на ${formatNumber(gap)}`;
+        return `<div class="list-item" style="${bg}">
+          <span>${p.icon} ${p.name}</span>
+          <span class="small">${status}</span>
+        </div>`;
+      }).join('');
+    }
+    function showFloat(text, color) {
+      const d = document.createElement('div');
+      d.className = 'float-number';
+      d.textContent = text;
+      if (color) d.style.color = color;
+      const r = tapBtn.getBoundingClientRect();
+      d.style.left = (r.left + r.width / 2 - 20) + 'px';
+      d.style.top = (r.top + r.height / 2 - 20) + 'px';
+      document.body.appendChild(d);
+      setTimeout(() => d.remove(), 600);
+    }
+    function updateUI() {
+      replenishEnergy();
+      $('tapCount').textContent = formatNumber(state.taps);
+      $('multiplierDisplay').textContent = totalMult().toFixed(1);
+      $('profileTaps').textContent = formatNumber(state.taps);
+      $('profileName').textContent = userName;
+      $('profileAvatar').textContent = '🐘';
+
+      const lv = elephantLevel();
+      $('elephantLevelPill').textContent = `${lv.icon} ${lv.label}`;
+
+      const next = nextElephant();
+      if (next) {
+        const prevMin = lv.min;
+        const remain = next.min - state.taps;
+        $('remainingToNext').textContent = formatNumber(remain);
+        const p = Math.max(0, Math.min(100, ((state.taps - prevMin) / (next.min - prevMin)) * 100));
+        $('progressFill').style.width = p + '%';
+        tapBtn.style.setProperty('--ring', p + '%');
+      } else {
+        $('remainingToNext').textContent = '0';
+        $('progressFill').style.width = '100%';
+        tapBtn.style.setProperty('--ring', '100%');
+      }
+
+      const em = getEnergyMax();
+      const er = getEnergyRegen();
+      $('energyValue').textContent = formatNumber(state.energy);
+      $('energyMaxValue').textContent = formatNumber(em);
+      $('energyRegenValue').textContent = formatNumber(er);
+      $('energyFill').style.width = (em ? (state.energy / em) * 100 : 0) + '%';
+
+      if (state.doubleActive) {
+        const s = Math.ceil((state.doubleEndTime - Date.now()) / 1000);
+        if (s <= 0) {
+          state.doubleActive = false;
+          $('doubleTimer').style.display = 'none';
+        } else {
+          $('doubleTimer').style.display = 'inline-flex';
+          $('doubleTimer').textContent = `⚡ x2 активен: ${s} сек`;
+        }
+      } else {
+        $('doubleTimer').style.display = 'none';
+      }
+
+      renderUpgrades();
+      renderEnergyUpgrades();
+      renderTasks();
+      renderAchievements();
+      save();
+    }
+
+    function renderUpgrades() {
+      let html = '';
+      for (const up of upgrades) {
+        const bought = state.purchasedUpgrades.includes(up.id);
+        const canBuy = state.taps >= up.price;
+        html += `<div class="list-item">
+          <div><div style="font-weight:800;">${up.name}</div><div class="small">${up.desc}</div></div>
+          ${bought
+            ? '<button class="btn disabled" disabled>Куплено</button>'
+            : `<button class="btn ${canBuy ? '' : 'disabled'}" data-up="${up.id}" ${canBuy ? '' : 'disabled'}>${formatNumber(up.price)}</button>`}
+        </div>`;
+      }
+      $('upgradesList').innerHTML = html;
+      $('upgradesList').querySelectorAll('button[data-up]').forEach(btn => {
+        btn.onclick = () => {
+          const id = parseInt(btn.getAttribute('data-up'), 10);
+          const up = upgrades.find(x => x.id === id);
+          if (!up || state.purchasedUpgrades.includes(id) || state.taps < up.price) return;
+          state.taps -= up.price;
+          state.purchasedUpgrades.push(id);
+          showFloat(`Куплено ${up.name}`, '#2dc6c6');
+          updateUI();
+        };
+      });
+    }
+    function renderEnergyUpgrades() {
+      let html = '';
+      for (const up of energyUpgrades) {
+        const bought = state.purchasedEnergyUpgrades.includes(up.id);
+        const canBuy = state.taps >= up.price;
+        html += `<div class="list-item">
+          <div><div style="font-weight:800;">${up.name}</div><div class="small">Цена: ${formatNumber(up.price)}</div></div>
+          ${bought
+            ? '<button class="btn disabled" disabled>Куплено</button>'
+            : `<button class="btn ${canBuy ? '' : 'disabled'}" data-eup="${up.id}" ${canBuy ? '' : 'disabled'}>Купить</button>`}
+        </div>`;
+      }
+      $('energyUpgradesList').innerHTML = html;
+      $('energyUpgradesList').querySelectorAll('button[data-eup]').forEach(btn => {
+        btn.onclick = () => {
+          const id = parseInt(btn.getAttribute('data-eup'), 10);
+          const up = energyUpgrades.find(x => x.id === id);
+          if (!up || state.purchasedEnergyUpgrades.includes(id) || state.taps < up.price) return;
+          state.taps -= up.price;
+          state.purchasedEnergyUpgrades.push(id);
+          replenishEnergy();
+          updateUI();
+        };
+      });
+    }
+    function renderTasks() {
+      let html = '';
+      for (const t of tasks) {
+        const done = !!completedTasks[t.id];
+        const canClaim = t.cond ? t.cond() : false;
+        let action = '';
+        if (done) action = '<button class="btn disabled" disabled>Выполнено</button>';
+        else if (t.id === 'subscribe') action = '<button class="btn" data-task="subscribe">Проверить</button>';
+        else if (canClaim) action = `<button class="btn" data-task="${t.id}">Забрать</button>`;
+        else action = '<button class="btn disabled" disabled>Скоро</button>';
+        html += `<div class="list-item"><div><div style="font-weight:800;">${t.icon} ${t.title}</div><div class="small">${t.desc}</div></div>${action}</div>`;
+      }
+      $('tasksList').innerHTML = html;
+      $('tasksList').querySelectorAll('button[data-task]').forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.getAttribute('data-task');
+          if (id === 'subscribe') return handleSubscribeTask();
+          const t = tasks.find(x => x.id === id);
+          if (!t || completedTasks[id] || !t.cond || !t.cond()) return;
+          completedTasks[id] = true;
+          state.taps += Math.round(t.reward || 0);
+          state.totalEarned += Math.round(t.reward || 0);
+          showFloat(`+${t.reward}`, '#2dc6c6');
+          queueScoreSync();
+          updateUI();
+        };
+      });
+    }
+    function renderAchievements() {
+      let html = '<div class="title" style="font-size:15px; margin:8px 0;">Достижения</div>';
+      for (const th of thresholds) {
+        const ok = state.taps >= th.value;
+        html += `<div class="list-item"><span>${ok ? '✅' : '🔒'} ${th.name}</span></div>`;
+      }
+      $('achievementsList').innerHTML = html;
+    }
+
+    // --- Backend sync (score + rating) ---
+    let scoreSyncTimer = null;
+    let lastReported = -1;
+    async function sendScore() {
+      if (!API.me) return;
+      const val = Math.round(state.totalEarned || 0);
+      if (val === lastReported) return;
+      const payload = { user_id: userId, user_name: userName, taps: val, multiplier: totalMult() };
+      const r = await fetch(API.me, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      lastReported = val;
+    }
+    function queueScoreSync() {
+      if (scoreSyncTimer) return;
+      scoreSyncTimer = setTimeout(async () => {
+        scoreSyncTimer = null;
+        try { await sendScore(); } catch (_) {}
+      }, 1200);
+    }
+    async function loadRating() {
+      const box = $('leaderboardList');
+      box.innerHTML = '<div class="list-item">Загрузка...</div>';
+      try {
+        const r = await fetch(API.top, { method: 'GET' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        const list = Array.isArray(d) ? d : (d.top || d.rows || d.users || []);
+        const me = list.find(x => String(x.user_id ?? x.userId ?? x.id) === String(userId));
+        const myScore = Number(me?.taps ?? me?.score ?? me?.newPeopleScore ?? 0);
+        $('newPeopleScore').textContent = formatNumber(myScore);
+        const partyScoreFromApi = Number(d?.partyScore ?? d?.newPeopleScore ?? d?.totalScore ?? d?.allTaps ?? 0);
+        const newPeoplePartyScore = partyScoreFromApi > 0
+          ? partyScoreFromApi
+          : list.reduce((acc, row) => acc + Number(row.taps ?? row.score ?? row.newPeopleScore ?? 0), 0);
+        const parties = buildPartyScores(newPeoplePartyScore);
+        const myPartyPos = parties.findIndex((p) => p.name === 'Новые люди');
+        const higher = myPartyPos > 0 ? parties[myPartyPos - 1] : null;
+        const currentOpp = higher || parties[myPartyPos] || { icon: '🆕', name: 'Новые люди', score: newPeoplePartyScore };
+        $('factionPill').textContent = '🤝 Наша партия: 🆕 Новые люди';
+        $('currentBossPill').textContent = `🛡️ Ближайший соперник: ${currentOpp.icon} ${currentOpp.name}`;
+        renderPartyRating(parties);
+        renderFactionBosses(newPeoplePartyScore, parties);
+        if (higher) {
+          const gap = Math.max(0, higher.score - newPeoplePartyScore);
+          const p = Math.max(0, Math.min(100, (newPeoplePartyScore / Math.max(higher.score, 1)) * 100));
+          $('factionProgressFill').style.width = p + '%';
+          $('factionProgressText').textContent = `До следующего места (${higher.icon} ${higher.name}): ${formatNumber(gap)}`;
+        } else {
+          $('factionProgressFill').style.width = '100%';
+          $('factionProgressText').textContent = 'Новые люди на 1 месте!';
+        }
+
+        if (!list.length) {
+          box.innerHTML = '<div class="list-item">Пока нет данных</div>';
+          return;
+        }
+        box.innerHTML = list.slice(0, 15).map((row, i) => {
+          const uid = row.user_id ?? row.userId ?? row.id;
+          const name = row.user_name ?? row.name ?? (row.username ? '@' + row.username : 'Игрок');
+          const score = row.taps ?? row.score ?? row.newPeopleScore ?? 0;
+          const meMark = String(uid) === String(userId) ? ' (ты)' : '';
+          return `<div class="list-item" ${meMark ? 'style="border-color: rgba(45,198,198,.55); background: rgba(45,198,198,.1);"' : ''}>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <div class="pill" style="min-width:34px; padding:4px 8px;">${i+1}</div>
+              <div>${escapeHtml(String(name))}${meMark}</div>
+            </div>
+            <b style="color:#2dc6c6;">${formatNumber(score)}</b>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        box.innerHTML = `<div class="list-item">Ошибка загрузки: ${escapeHtml(String(e.message || e))}</div>`;
+      }
+    }
+
+    // --- Friends + subscribe ---
+    function setSubscribeButtonState() {
+      const done = !!completedTasks.subscribe;
+      const btn = $('subscribeBtn');
+      if (btn) {
+        btn.textContent = done ? 'Выполнено' : 'Подписаться';
+        btn.disabled = done;
+        btn.classList.toggle('disabled', done);
+      }
+    }
+    async function handleSubscribeTask() {
+      if (completedTasks.subscribe) return;
+      tg.openTelegramLink('https://t.me/newpeople_vologda');
+      const btn = $('subscribeBtn');
+      if (btn) {
+        btn.textContent = 'Проверяется...';
+        btn.disabled = true;
+      }
+      showFloat('Проверяю подписку...', '#fff');
+      for (let i = 0; i < 4; i++) {
+        await new Promise(r => setTimeout(r, 1300 + i * 900));
+        try {
+          const username = 'newpeople_vologda';
+          const r = await fetch(API.subCheck, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, channelUsername: username })
+          });
+          const d = await r.json();
+          if (d?.subscribed || d?.ok || d?.result?.subscribed) {
+            completedTasks.subscribe = true;
+            state.doubleActive = true;
+            state.doubleEndTime = Date.now() + 30000;
+            showFloat('Подписка подтверждена! x2', '#2dc6c6');
+            setSubscribeButtonState();
+            return updateUI();
+          }
+        } catch (_) {}
+      }
+      if (btn && !completedTasks.subscribe) {
+        btn.textContent = 'Подписаться';
+        btn.disabled = false;
+      }
+      showFloat('Не вижу подписку, бонус не выдан', '#fff');
+    }
+
+    async function loadFriends() {
+      $('referralCount').textContent = formatNumber(state.referralsClaimed);
+      const box = $('referralsList');
+      box.innerHTML = '<div class="list-item">Загрузка...</div>';
+      try {
+        const r = await fetch(API.refs, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        const active = d.referralsActive || d.friendsActive || d.referralsInGame || d.friendsInGame || [];
+        const pending = d.referralsPending || d.friendsPending || d.referralsNotInGame || d.friendsNotInGame || [];
+        const fallbackList = Array.isArray(d.referrals) ? d.referrals : [];
+        const activeList = active.length ? active : fallbackList.filter(x => x.status === 'active' || x.in_game === 1);
+        const pendingList = pending.length ? pending : fallbackList.filter(x => x.status === 'pending' || x.in_game === 0);
+        if (typeof d.referralsClaimed === 'number') state.referralsClaimed = d.referralsClaimed;
+
+        // Начисляем награды за рефералов, если сервер прислал awards
+        if (d.awards && Array.isArray(d.awards) && d.awards.length) {
+          let totalBonus = 0;
+          for (const award of d.awards) totalBonus += Number(award.taps || 0);
+          totalBonus = Math.round(totalBonus);
+          if (totalBonus > 0) {
+            state.taps += totalBonus;
+            state.totalEarned += totalBonus;
+            updateUI();
+            queueScoreSync();
+          }
+        }
+
+        $('referralCount').textContent = formatNumber(state.referralsClaimed);
+        if (!activeList.length && !pendingList.length) {
+          box.innerHTML = '<div class="list-item">Пока нет друзей в игре</div>';
+          return;
+        }
+        box.innerHTML = [
+          ...activeList.map((u, idx) => `<div class="list-item"><span>✅ ${escapeHtml(u.name || u.user_name || u.referred_name || u.username || ('Друг #' + (idx + 1)))}</span><b>+5</b></div>`),
+          ...pendingList.map((u, idx) => `<div class="list-item"><span>⏳ ${escapeHtml(u.name || u.user_name || u.referred_name || u.username || ('Друг #' + (idx + 1)))}</span><span class="small">ожидает</span></div>`)
+        ].join('');
+      } catch (e) {
+        box.innerHTML = '<div class="list-item">Не удалось загрузить друзей</div>';
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"]/g, ch => ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : '&quot;');
+    }
+
+    function onTap() {
+      replenishEnergy();
+      if (state.energy < 1) {
+        showFloat('Энергия закончилась');
+        return updateUI();
+      }
+      state.energy -= 1;
+      state.energyLastUpdate = Date.now();
+
+      let p = totalMult();
+      if (state.doubleActive) p *= 2;
+      const gained = Math.round(p);
+      state.taps += gained;
+      state.totalEarned += gained;
+      checkThresholds();
+      queueScoreSync();
+      updateUI();
+
+      if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+      showFloat(`+${gained}`);
+      tapBtn.classList.remove('tap-pulse');
+      tapBtn.classList.add('tap-pulse');
+      setTimeout(() => tapBtn.classList.remove('tap-pulse'), 240);
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+      $(`${tab}Tab`).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
+      if (tab === 'rating') loadRating();
+      if (tab === 'friends') loadFriends();
+      if (tab === 'profile') renderAchievements();
+    }
+
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+    });
+    $('subscribeBtn').addEventListener('click', handleSubscribeTask);
+    $('inviteFriendsBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch(API.createInvite, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referrerId: userId, referrerName: userName })
+        });
+        const data = await response.json();
+        if (data.ok && data.inviteLink) {
+          tg.openTelegramLink(
+            `https://t.me/share/url?url=${encodeURIComponent(data.inviteLink)}&text=${encodeURIComponent('Присоединяйся к Tap Elephant!')}`
+          );
+        } else {
+          throw new Error('No invite link');
+        }
+      } catch (err) {
+        console.error(err);
+        // fallback на старый формат
+        const ref = `ref_${userId}`;
+        const url = `https://t.me/New_people_start_bot?start=${encodeURIComponent(ref)}`;
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent('Присоединяйся к Tap Elephant!')}`);
+      }
+    });
+
+    // init
+    registerStartParamReferral();
+    load();
+    setSubscribeButtonState();
+    updateUI();
+    tapBtn.addEventListener('click', onTap);
+    setInterval(() => { replenishEnergy(); updateUI(); }, 1000);
+    setInterval(() => {
+      const t = $('ratingTab');
+      if (t.classList.contains('active')) loadRating();
+    }, 15000);
+    tg.ready();
+    window.addEventListener('beforeunload', () => { save(); queueScoreSync(); });
+  </script>
+</body>
+</html>
