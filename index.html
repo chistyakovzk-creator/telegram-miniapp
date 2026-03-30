@@ -3,175 +3,503 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Telegram Mini App — Тапалка</title>
+    <title>Tap Elephant — мини-игра</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
         }
+
         body {
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: var(--tg-theme-bg-color, #ffffff);
             color: var(--tg-theme-text-color, #000000);
-            padding: 20px;
+            padding: 16px;
             transition: background 0.2s, color 0.2s;
+            min-height: 100vh;
         }
+
         .container {
             max-width: 400px;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
+
+        /* карточка пользователя */
         .user-card {
             background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 20px;
+            padding: 16px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
+
         .avatar {
-            width: 60px;
-            height: 60px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             background: var(--tg-theme-button-color, #2481cc);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 28px;
+            font-weight: bold;
             color: white;
         }
+
         .user-info {
             flex: 1;
         }
+
         .user-name {
             font-weight: bold;
             font-size: 18px;
             margin-bottom: 4px;
         }
+
         .user-id {
-            font-size: 14px;
+            font-size: 13px;
             opacity: 0.7;
         }
-        button {
+
+        /* панель статистики */
+        .stats {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 20px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        .stat {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--tg-theme-button-color, #2481cc);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* кнопка тапа */
+        .tap-area {
+            display: flex;
+            justify-content: center;
+            margin: 8px 0;
+        }
+
+        .tap-btn {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
             background: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            border: none;
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.2);
+            transition: transform 0.05s linear, box-shadow 0.05s linear;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .tap-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        /* бонусы */
+        .bonus-panel {
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 20px;
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .bonus-btn {
+            background: var(--tg-theme-button-color, #2481cc);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .bonus-btn:active {
+            opacity: 0.7;
+        }
+
+        .bonus-btn.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* статус активных бонусов */
+        .active-bonus {
+            background: var(--tg-theme-secondary-bg-color, #e0e0e0);
+            border-radius: 20px;
+            padding: 12px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        /* кнопка отправки */
+        .send-btn {
+            background: var(--tg-theme-button-color, #2481cc);
+            color: white;
             border: none;
             border-radius: 12px;
-            padding: 12px 20px;
+            padding: 14px;
             font-size: 16px;
             font-weight: 500;
             width: 100%;
             cursor: pointer;
             transition: opacity 0.2s;
-            margin-bottom: 12px;
         }
-        button:active {
+
+        .send-btn:active {
             opacity: 0.7;
         }
+
         .info-text {
-            margin-top: 20px;
-            font-size: 14px;
+            font-size: 12px;
             text-align: center;
             opacity: 0.6;
         }
-        .counter {
-            text-align: center;
-            font-size: 48px;
+
+        /* анимация всплывающего +1 */
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-40px) scale(1.2);
+            }
+        }
+
+        .float-number {
+            position: fixed;
+            pointer-events: none;
+            font-size: 24px;
             font-weight: bold;
-            margin: 20px 0;
             color: var(--tg-theme-button-color, #2481cc);
+            animation: floatUp 0.6s ease-out forwards;
+            z-index: 1000;
         }
     </style>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="user-card" id="userCard">
-            <div class="avatar" id="avatar">👤</div>
-            <div class="user-info">
-                <div class="user-name" id="userName">Загрузка...</div>
-                <div class="user-id" id="userId"></div>
-            </div>
-        </div>
-
-        <div class="counter" id="tapCounter">0</div>
-        <button id="tapBtn">👆 Тапни меня!</button>
-        <button id="sendDataBtn">📤 Отправить данные боту</button>
-        <div class="info-text">
-            Нажимай на кнопку — счётчик растёт.<br>
-            «Отправить данные» — отправит результат боту и закроет приложение.
+<div class="container">
+    <div class="user-card">
+        <div class="avatar" id="avatar">🐘</div>
+        <div class="user-info">
+            <div class="user-name" id="userName">Загрузка...</div>
+            <div class="user-id" id="userId"></div>
         </div>
     </div>
 
-    <script>
-        // Инициализация Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // Растягиваем на весь экран
-        tg.enableClosingConfirmation(); // Спросить при закрытии
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value" id="tapCount">0</div>
+            <div class="stat-label">Тапов</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="level">1</div>
+            <div class="stat-label">Уровень</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="pointsPerTap">1</div>
+            <div class="stat-label">Очков за тап</div>
+        </div>
+    </div>
 
-        // Получаем данные пользователя
-        const user = tg.initDataUnsafe?.user;
-        let firstName = 'Гость';
-        let userId = 'неизвестно';
-        let avatarInitial = '👤';
+    <div class="tap-area">
+        <button class="tap-btn" id="tapBtn">🐘</button>
+    </div>
 
-        if (user) {
-            firstName = user.first_name || 'Пользователь';
-            if (user.last_name) firstName += ' ' + user.last_name;
-            userId = user.id;
-            if (user.first_name && user.first_name.length > 0) {
-                avatarInitial = user.first_name.charAt(0).toUpperCase();
-            }
+    <div class="bonus-panel">
+        <button class="bonus-btn" id="doubleBonusBtn" data-active="false">⚡ x2 (10 тапов)</button>
+        <button class="bonus-btn" id="autoBonusBtn" data-active="false">🤖 Авто-тап (20 тапов)</button>
+    </div>
+
+    <div class="active-bonus" id="activeBonusInfo">
+        Активные бонусы: —
+    </div>
+
+    <button class="send-btn" id="sendDataBtn">📤 Отправить статистику боту</button>
+    <div class="info-text">
+        Нажимай на слона, зарабатывай очки и открывай бонусы!<br>
+        Прогресс сохраняется автоматически.
+    </div>
+</div>
+
+<script>
+    // ==================== Telegram WebApp ====================
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.enableClosingConfirmation();
+
+    // Данные пользователя
+    const user = tg.initDataUnsafe?.user;
+    let firstName = 'Гость';
+    let userId = 'неизвестно';
+    let avatarInitial = '🐘';
+
+    if (user) {
+        firstName = user.first_name || 'Пользователь';
+        if (user.last_name) firstName += ' ' + user.last_name;
+        userId = user.id;
+    }
+
+    document.getElementById('userName').textContent = firstName;
+    document.getElementById('userId').textContent = `ID: ${userId}`;
+    document.getElementById('avatar').textContent = avatarInitial;
+
+    // ==================== Игровое состояние ====================
+    let state = {
+        taps: 0,            // общее количество тапов (очков)
+        level: 1,
+        pointsPerTap: 1,
+        doubleActive: false,
+        doubleEndTime: 0,
+        autoActive: false,
+        autoInterval: null
+    };
+
+    // Загружаем сохранённый прогресс
+    function loadProgress() {
+        const saved = localStorage.getItem('tapGame');
+        if (saved) {
+            try {
+                const savedState = JSON.parse(saved);
+                // обновляем только нужные поля, чтобы не перезаписывать функции
+                state.taps = savedState.taps || 0;
+                state.level = savedState.level || 1;
+                state.pointsPerTap = savedState.pointsPerTap || 1;
+                state.doubleActive = savedState.doubleActive || false;
+                state.doubleEndTime = savedState.doubleEndTime || 0;
+                // авто-тап не сохраняем активным, чтобы не было вечных интервалов
+                state.autoActive = false;
+                if (state.autoInterval) clearInterval(state.autoInterval);
+                state.autoInterval = null;
+            } catch(e) { console.warn(e); }
+        }
+        // если двойные очки были активны, но время истекло – отключаем
+        if (state.doubleActive && Date.now() > state.doubleEndTime) {
+            state.doubleActive = false;
+        }
+        updateUI();
+    }
+
+    function saveProgress() {
+        const toSave = {
+            taps: state.taps,
+            level: state.level,
+            pointsPerTap: state.pointsPerTap,
+            doubleActive: state.doubleActive,
+            doubleEndTime: state.doubleEndTime
+        };
+        localStorage.setItem('tapGame', JSON.stringify(toSave));
+    }
+
+    // Обновление UI: счётчик, уровень, очки за тап, бонусы
+    function updateUI() {
+        document.getElementById('tapCount').textContent = state.taps;
+        document.getElementById('level').textContent = state.level;
+        document.getElementById('pointsPerTap').textContent = state.pointsPerTap;
+
+        // Кнопки бонусов
+        const doubleBtn = document.getElementById('doubleBonusBtn');
+        const autoBtn = document.getElementById('autoBonusBtn');
+        // двойные очки доступны после 10 тапов, если не активны
+        if (state.taps >= 10 && !state.doubleActive) {
+            doubleBtn.classList.remove('disabled');
         } else {
-            console.warn('Приложение запущено вне Telegram или данные отсутствуют');
+            doubleBtn.classList.add('disabled');
+        }
+        // авто-тап доступен после 20 тапов, если не активен
+        if (state.taps >= 20 && !state.autoActive) {
+            autoBtn.classList.remove('disabled');
+        } else {
+            autoBtn.classList.add('disabled');
         }
 
-        document.getElementById('userName').textContent = firstName;
-        document.getElementById('userId').textContent = `ID: ${userId}`;
-        document.getElementById('avatar').textContent = avatarInitial;
+        // Информация об активных бонусах
+        let bonusText = '';
+        if (state.doubleActive) {
+            const secondsLeft = Math.ceil((state.doubleEndTime - Date.now()) / 1000);
+            bonusText += `⚡ x2 активен (${secondsLeft} сек) `;
+        }
+        if (state.autoActive) {
+            bonusText += `🤖 Авто-тап активен `;
+        }
+        if (!bonusText) bonusText = '—';
+        document.getElementById('activeBonusInfo').innerHTML = `Активные бонусы: ${bonusText}`;
 
-        // Счётчик тапов
-        let tapCount = 0;
-        const counterElem = document.getElementById('tapCounter');
+        // обновляем главную кнопку Telegram (отображаем текущий счёт)
+        tg.MainButton.setText(`Отправить (${state.taps})`);
+    }
+
+    // Проверка повышения уровня (каждые 10 тапов)
+    function checkLevelUp() {
+        const newLevel = Math.floor(state.taps / 10) + 1;
+        if (newLevel > state.level) {
+            state.level = newLevel;
+            // за каждый уровень +1 к базовому очку за тап
+            state.pointsPerTap = 1 + (state.level - 1);
+            // можно добавить вибрацию при повышении
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            // всплывающее сообщение
+            showFloatingText(`Уровень ${state.level}!`, '#ffaa00');
+        }
+        updateUI();
+    }
+
+    // Добавление очков с учётом бонусов
+    function addPoints(basePoints) {
+        let points = basePoints;
+        if (state.doubleActive) points *= 2;
+        state.taps += points;
+        // вибрация при тапе
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        checkLevelUp();
+        updateUI();
+        saveProgress();
+    }
+
+    // Визуальный эффект +1 (и всплывающее число)
+    function showFloatingText(text, color = null) {
+        const div = document.createElement('div');
+        div.className = 'float-number';
+        div.textContent = text;
+        if (color) div.style.color = color;
+        // позиционируем по центру кнопки тапа
         const tapBtn = document.getElementById('tapBtn');
+        const rect = tapBtn.getBoundingClientRect();
+        const x = rect.left + rect.width / 2 - 20;
+        const y = rect.top + rect.height / 2 - 20;
+        div.style.left = x + 'px';
+        div.style.top = y + 'px';
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 600);
+    }
 
-        tapBtn.addEventListener('click', () => {
-            tapCount++;
-            counterElem.textContent = tapCount;
-            // Вибрация (если поддерживается)
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
+    // Обработка тапа
+    function onTap() {
+        addPoints(state.pointsPerTap);
+        showFloatingText(`+${state.pointsPerTap * (state.doubleActive ? 2 : 1)}`);
+        // анимация кнопки (добавляем в CSS уже есть, но можно дополнительно)
+        const btn = document.getElementById('tapBtn');
+        btn.style.transform = 'scale(0.95)';
+        setTimeout(() => btn.style.transform = '', 100);
+    }
+
+    // Бонус: двойные очки на 30 секунд
+    function activateDouble() {
+        if (state.doubleActive) return;
+        if (state.taps < 10) return;
+        state.doubleActive = true;
+        state.doubleEndTime = Date.now() + 30000; // 30 сек
+        updateUI();
+        saveProgress();
+        showFloatingText('x2 активирован!', '#ffaa00');
+        // автовыключение через 30 сек
+        setTimeout(() => {
+            if (state.doubleActive && Date.now() >= state.doubleEndTime) {
+                state.doubleActive = false;
+                updateUI();
+                saveProgress();
+                showFloatingText('x2 закончился', '#ff6666');
             }
-        });
+        }, 30000);
+    }
 
-        // Настраиваем главную кнопку (Main Button) внизу
-        tg.MainButton.text = "Отправить результат";
-        tg.MainButton.show();
-        tg.MainButton.onClick(() => {
-            sendResult();
-        });
+    // Бонус: авто-тап (каждые 2 секунды) на 20 секунд
+    function activateAuto() {
+        if (state.autoActive) return;
+        if (state.taps < 20) return;
+        state.autoActive = true;
+        updateUI();
+        saveProgress();
+        showFloatingText('Авто-тап включён!', '#44cc44');
+        let tapsCount = 0;
+        state.autoInterval = setInterval(() => {
+            if (!state.autoActive) return;
+            addPoints(state.pointsPerTap);
+            tapsCount++;
+            showFloatingText(`+${state.pointsPerTap * (state.doubleActive ? 2 : 1)} (авто)`);
+        }, 2000);
+        // отключить через 20 секунд
+        setTimeout(() => {
+            if (state.autoActive) {
+                clearInterval(state.autoInterval);
+                state.autoActive = false;
+                state.autoInterval = null;
+                updateUI();
+                saveProgress();
+                showFloatingText('Авто-тап закончился', '#ff6666');
+            }
+        }, 20000);
+    }
 
-        // Кнопка отправки данных внутри приложения
-        const sendBtn = document.getElementById('sendDataBtn');
-        sendBtn.addEventListener('click', () => {
-            sendResult();
-        });
+    // Отправка данных боту
+    function sendResult() {
+        const result = {
+            action: 'game_result',
+            user_id: userId,
+            user_name: firstName,
+            taps: state.taps,
+            level: state.level,
+            timestamp: new Date().toISOString()
+        };
+        tg.sendData(JSON.stringify(result));
+        tg.close();
+    }
 
-        function sendResult() {
-            const result = {
-                action: 'tap_result',
-                user_id: userId,
-                user_name: firstName,
-                taps: tapCount,
-                timestamp: new Date().toISOString()
-            };
-            tg.sendData(JSON.stringify(result));
-            tg.close();
-        }
+    // Инициализация бонусных кнопок
+    document.getElementById('doubleBonusBtn').addEventListener('click', activateDouble);
+    document.getElementById('autoBonusBtn').addEventListener('click', activateAuto);
+    document.getElementById('tapBtn').addEventListener('click', onTap);
+    document.getElementById('sendDataBtn').addEventListener('click', sendResult);
 
-        // Уведомляем Telegram, что приложение готово
-        tg.ready();
-    </script>
+    // Главная кнопка Telegram
+    tg.MainButton.text = `Отправить (0)`;
+    tg.MainButton.show();
+    tg.MainButton.onClick(sendResult);
+
+    // Восстановление сохранённого состояния
+    loadProgress();
+
+    // Если приложение свёрнуто или закрыто – сохраняем
+    window.addEventListener('beforeunload', () => saveProgress());
+
+    // Готово
+    tg.ready();
+</script>
 </body>
 </html>
