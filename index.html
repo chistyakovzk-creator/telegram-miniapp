@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Telegram Mini App — Тапалка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 20px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .user-card {
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--tg-theme-button-color, #2481cc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+        .user-info {
+            flex: 1;
+        }
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        .user-id {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        button {
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            width: 100%;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-bottom: 12px;
+        }
+        button:active {
+            opacity: 0.7;
+        }
+        .info-text {
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: center;
+            opacity: 0.6;
+        }
+        .counter {
+            text-align: center;
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: var(--tg-theme-button-color, #2481cc);
+        }
+    </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="user-card" id="userCard">
+            <div class="avatar" id="avatar">👤</div>
+            <div class="user-info">
+                <div class="user-name" id="userName">Загрузка...</div>
+                <div class="user-id" id="userId"></div>
+            </div>
+        </div>
+
+        <div class="counter" id="tapCounter">0</div>
+        <button id="tapBtn">👆 Тапни меня!</button>
+        <button id="sendDataBtn">📤 Отправить данные боту</button>
+        <div class="info-text">
+            Нажимай на кнопку — счётчик растёт.<br>
+            «Отправить данные» — отправит результат боту и закроет приложение.
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Растягиваем на весь экран
+        tg.enableClosingConfirmation(); // Спросить при закрытии
+
+        // Получаем данные пользователя
+        const user = tg.initDataUnsafe?.user;
+        let firstName = 'Гость';
+        let userId = 'неизвестно';
+        let avatarInitial = '👤';
+
+        if (user) {
+            firstName = user.first_name || 'Пользователь';
+            if (user.last_name) firstName += ' ' + user.last_name;
+            userId = user.id;
+            if (user.first_name && user.first_name.length > 0) {
+                avatarInitial = user.first_name.charAt(0).toUpperCase();
+            }
+        } else {
+            console.warn('Приложение запущено вне Telegram или данные отсутствуют');
+        }
+
+        document.getElementById('userName').textContent = firstName;
+        document.getElementById('userId').textContent = `ID: ${userId}`;
+        document.getElementById('avatar').textContent = avatarInitial;
+
+        // Счётчик тапов
+        let tapCount = 0;
+        const counterElem = document.getElementById('tapCounter');
+        const tapBtn = document.getElementById('tapBtn');
+
+        tapBtn.addEventListener('click', () => {
+            tapCount++;
+            counterElem.textContent = tapCount;
+            // Вибрация (если поддерживается)
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        });
+
+        // Настраиваем главную кнопку (Main Button) внизу
+        tg.MainButton.text = "Отправить результат";
+        tg.MainButton.show();
+        tg.MainButton.onClick(() => {
+            sendResult();
+        });
+
+        // Кнопка отправки данных внутри приложения
+        const sendBtn = document.getElementById('sendDataBtn');
+        sendBtn.addEventListener('click', () => {
+            sendResult();
+        });
+
+        function sendResult() {
+            const result = {
+                action: 'tap_result',
+                user_id: userId,
+                user_name: firstName,
+                taps: tapCount,
+                timestamp: new Date().toISOString()
+            };
+            tg.sendData(JSON.stringify(result));
+            tg.close();
+        }
+
+        // Уведомляем Telegram, что приложение готово
+        tg.ready();
+    </script>
+</body>
+</html>
