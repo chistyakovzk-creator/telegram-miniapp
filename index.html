@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Tap Elephant — Тапни будущее</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    html, body { overscroll-behavior: contain; }
+    :root {
+      --accent: #00C2B8;
+      --accent-2: #00E0D3;
+      --accent-dark: #00A79E;
+      --text-main: #1E2A2A;
+      --text-soft: #6B8A8A;
+      --glass: rgba(255,255,255,.72);
+      --glass-soft: rgba(255,255,255,.54);
+      --line: rgba(47,207,205,.25);
+      --radius-lg: 26px;
+      --radius-md: 20px;
+    }
+    body {
+      font-family: "SF Pro Display", "SF Pro Text", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(1000px 600px at 10% -10%, rgba(47,207,205,.28), transparent 60%),
+        radial-gradient(900px 500px at 100% 0%, rgba(34,184,215,.18), transparent 55%),
+        linear-gradient(180deg, #F8FBFB 0%, #F3FBFB 48%, #F8FBFB 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "Новые люди новые люди партия «Новые люди» новые люди новые люди \A Новые люди новые люди партия «Новые люди» новые люди новые люди \A Новые люди новые люди партия «Новые люди» новые люди новые люди";
+      white-space: pre;
+      position: fixed;
+      inset: -40% -20% auto -30%;
+      font-size: 54px;
+      line-height: 1.55;
+      letter-spacing: 1px;
+      color: rgba(30, 42, 42, .04);
+      transform: rotate(-22deg);
+      filter: blur(1px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(0, 194, 184, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 194, 184, 0.025) 1px, transparent 1px);
+      background-size: 24px 24px, 24px 24px;
+      opacity: .18;
+      mix-blend-mode: multiply;
+    }
+    button, a { -webkit-tap-highlight-color: rgba(0,0,0,0); }
+    button, .btn, .nav-item, .list-item, .card, .pill { transition: all .22s ease; }
+
+    .app-header {
+      position: sticky;
+      top: 8px;
+      z-index: 20;
+      margin: 10px 14px 8px;
+      padding: 12px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.62));
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 24px rgba(20,140,154,.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .header-left { min-width: 0; }
+    .close-btn {
+      border: 1px solid rgba(0,194,184,.26);
+      background: rgba(255,255,255,.86);
+      color: #365253;
+      border-radius: 12px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .app-title { font-size: 22px; font-weight: 800; color: #233841; }
+    .app-subtitle { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+
+    .main-content { position: relative; z-index: 1; flex: 1; padding: 6px 12px 96px; overflow-y: auto; }
+    .tab-view { display: none; animation: fade .24s ease; }
+    .tab-view.active { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card {
+      background: linear-gradient(180deg, var(--glass), var(--glass-soft));
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 12px 28px rgba(18, 138, 150, .12);
+    }
+    .title { font-weight: 800; margin-bottom: 10px; font-size: 17px; color: #243741; letter-spacing: .2px; }
+    .pill {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      border: 1px solid rgba(47,207,205,.3);
+      background: rgba(255,255,255,.78);
+      border-radius: 14px;
+      padding: 7px 10px;
+      color: var(--text-main);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-bottom: 10px; }
+    .hamster-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .metric-item {
+      background: rgba(255,255,255,.84);
+      border: 1px solid rgba(0,194,184,.2);
+      border-radius: 12px;
+      padding: 7px 6px;
+      text-align: center;
+    }
+    .metric-label { font-size: 11px; color: var(--text-soft); }
+    .metric-value { font-size: 14px; font-weight: 800; color: var(--text-main); margin-top: 3px; }
+    .profile-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,.86);
+      border: 1px solid rgba(0,194,184,.2);
+      border-radius: 16px;
+      padding: 10px;
+    }
+    .profile-left { display: flex; align-items: center; gap: 10px; }
+    .avatar-circle {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(180deg, #d7fffb, #b9f7f1);
+      border: 1px solid rgba(0,194,184,.3);
+      font-size: 22px;
+    }
+    .profile-name { font-size: 15px; font-weight: 800; color: #243738; }
+    .profile-role { font-size: 12px; color: var(--text-soft); }
+    .party-badge {
+      border: 1px solid rgba(0,194,184,.3);
+      background: rgba(0,194,184,.12);
+      color: #1e6f6d;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .stat-item {
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(47,207,205,.22);
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.96), 0 6px 18px rgba(20,140,154,.08);
+    }
+    .stat-value { font-weight: 900; color: var(--accent-dark); font-size: 28px; letter-spacing: -.3px; }
+    .stat-label { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+
+    .energy-wrap { margin: 8px 0 10px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .progress {
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: linear-gradient(90deg, rgba(47,207,205,.16), rgba(34,184,215,.12));
+      margin-top: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .35s ease;
+      box-shadow: 0 0 14px rgba(47,207,205,.32);
+    }
+
+    .tap-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0 8px; }
+    .tap-button {
+      --ring: 0%;
+      width: 236px;
+      height: 236px;
+      margin: 12px auto 14px;
+      border-radius: 50%;
+      border: none;
+      color: #fff;
+      font-size: 72px;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 28% 24%, #9cf4f1 0%, #53ddd8 36%, #2fcfcd 62%, #159dac 100%);
+      box-shadow: 0 16px 0 rgba(16,122,132,.34), 0 30px 62px rgba(34,184,215,.4), inset 0 -12px 18px rgba(0,0,0,.08);
+      animation: tapIdle 2.8s ease-in-out infinite;
+    }
+    .tap-button::before {
+      content: "";
+      position: absolute;
+      inset: -16px;
+      border-radius: 50%;
+      z-index: -1;
+      background: conic-gradient(var(--accent) var(--ring), rgba(47,207,205,.18) var(--ring));
+      filter: drop-shadow(0 0 14px rgba(47,207,205,.35));
+    }
+    .tap-button::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.46);
+      pointer-events: none;
+    }
+    .tap-button span { transform: translateY(2px); text-shadow: 0 2px 8px rgba(0,0,0,.12); }
+    .tap-button:active { transform: scale(.975); }
+    .tap-pulse { animation: tapPulse .24s ease-out; }
+    @keyframes tapIdle {
+      0%, 100% { box-shadow: 0 16px 0 rgba(16,122,132,.34), 0 30px 62px rgba(34,184,215,.38), inset 0 -12px 18px rgba(0,0,0,.08); }
+      50% { box-shadow: 0 16px 0 rgba(16,122,132,.34), 0 34px 66px rgba(34,184,215,.5), inset 0 -12px 18px rgba(0,0,0,.08); }
+    }
+    @keyframes tapPulse { 0% { filter: brightness(1); } 55% { filter: brightness(1.1); } 100% { filter: brightness(1); } }
+
+    .tap-hint { font-size: 12px; color: var(--text-soft); margin-top: 10px; }
+    .center-balance { text-align: center; margin: 6px 0 4px; }
+    .center-balance-value { font-size: 34px; font-weight: 900; color: #183b3c; letter-spacing: -.4px; }
+    .center-balance-label { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+    .next-level-card {
+      width: 100%;
+      max-width: 430px;
+      margin: 10px auto 0;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(47,207,205,.24);
+      border-radius: 16px;
+      padding: 11px;
+      box-shadow: 0 10px 24px rgba(20,140,154,.08);
+    }
+    .bonus-card {
+      margin-top: 10px;
+      background: rgba(255,255,255,.84);
+      border: 1px solid rgba(0,194,184,.24);
+      border-radius: 16px;
+      padding: 11px;
+      box-shadow: 0 8px 18px rgba(0,194,184,.08);
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 10px 20px rgba(47,207,205,.28);
+    }
+    .btn:hover { filter: brightness(1.04); transform: translateY(-1px); }
+    .btn:active { transform: scale(.97); }
+    .btn.disabled { opacity: .5; pointer-events: none; box-shadow: none; }
+
+    .list-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(47,207,205,.2);
+      border-radius: 14px;
+      padding: 9px 10px;
+      margin-bottom: 8px;
+      color: var(--text-main);
+      box-shadow: 0 6px 18px rgba(18,138,150,.06);
+    }
+    .task-row { align-items: stretch; }
+    .task-meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .task-progress {
+      height: 6px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(47,207,205,.14);
+      width: 140px;
+    }
+    .task-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      width: 0%;
+      transition: width .3s ease;
+    }
+    .task-reward {
+      font-size: 11px;
+      border: 1px solid rgba(47,207,205,.28);
+      background: rgba(47,207,205,.12);
+      color: #1e6d77;
+      border-radius: 999px;
+      padding: 2px 8px;
+      width: fit-content;
+    }
+    .task-done {
+      background: rgba(129, 228, 199, .18);
+      border-color: rgba(75, 197, 155, .35);
+    }
+    .task-locked { filter: saturate(.6); opacity: .82; }
+    .tasks-section-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #4e6a75;
+      letter-spacing: .4px;
+      margin: 4px 2px 8px;
+      text-transform: uppercase;
+    }
+    .boost-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .boost-tab {
+      border: 1px solid rgba(0,194,184,.2);
+      background: rgba(255,255,255,.84);
+      border-radius: 10px;
+      padding: 6px 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #466364;
+      text-align: center;
+    }
+    .small { font-size: 12px; color: var(--text-soft); }
+    .float-number {
+      position: fixed; pointer-events: none; z-index: 1000;
+      font-size: 22px; font-weight: 900; color: var(--accent-dark);
+      background: rgba(255,255,255,.86);
+      border: 1px solid rgba(47,207,205,.3);
+      border-radius: 16px;
+      padding: 6px 10px;
+      animation: floatUp .6s ease-out forwards;
+    }
+    .tap-particle {
+      position: fixed;
+      width: 7px;
+      height: 7px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #83f3f1, #2fcfcd);
+      pointer-events: none;
+      z-index: 999;
+      animation: particle .55s ease-out forwards;
+    }
+    @keyframes particle {
+      from { opacity: .9; transform: translate(0, 0) scale(1); }
+      to { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(.4); }
+    }
+    @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-46px); } }
+
+    .bottom-nav {
+      position: fixed;
+      left: 10px; right: 10px; bottom: 8px; z-index: 30;
+      display: flex; justify-content: space-around; gap: 6px;
+      padding: 8px 8px calc(9px + env(safe-area-inset-bottom));
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(47,207,205,.24);
+      border-radius: 20px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 14px 36px rgba(20,140,154,.16);
+    }
+    .nav-item {
+      min-width: 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 4px 7px;
+      color: #6f8088;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .nav-item:active { transform: scale(.96); }
+    .nav-item.active {
+      color: var(--accent-dark);
+      background: rgba(47,207,205,.16);
+      border-color: rgba(47,207,205,.3);
+      box-shadow: 0 6px 16px rgba(47,207,205,.2);
+      transform: scale(1.04);
+    }
+    .top-glow { border-color: rgba(47,207,205,.42) !important; box-shadow: 0 8px 22px rgba(47,207,205,.22); }
+    .rank-1 {
+      border-color: rgba(255, 207, 83, .7) !important;
+      background: linear-gradient(90deg, rgba(255,239,184,.75), rgba(255,255,255,.92)) !important;
+      box-shadow: 0 8px 24px rgba(255, 199, 64, .22);
+    }
+    .rank-2 {
+      border-color: rgba(173, 204, 219, .7) !important;
+      background: linear-gradient(90deg, rgba(229,243,250,.8), rgba(255,255,255,.92)) !important;
+      box-shadow: 0 8px 22px rgba(126, 165, 182, .2);
+    }
+    .rank-3 {
+      border-color: rgba(213, 163, 130, .68) !important;
+      background: linear-gradient(90deg, rgba(244,225,212,.8), rgba(255,255,255,.92)) !important;
+      box-shadow: 0 8px 20px rgba(194, 140, 104, .2);
+    }
+    .nav-icon { font-size: 20px; }
+
+    @media (max-width: 420px) {
+      .app-title { font-size: 20px; }
+      .tap-button { width: 214px; height: 214px; font-size: 62px; }
+      body::before { font-size: 44px; }
+    }
+  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <div class="app-title">Тапни будущее</div>
+      <div class="app-subtitle">мини-приложение</div>
+    </div>
+    <button id="closeAppBtn" class="close-btn">Закрыть</button>
+  </header>
+  <div class="main-content">
+    <!-- TAP -->
+    <div id="tapTab" class="tab-view active">
+      <div class="card">
+        <div class="profile-card">
+          <div class="profile-left">
+            <div class="avatar-circle">🐘</div>
+            <div>
+              <div class="profile-name">Захар</div>
+              <div class="profile-role">Лидер партии</div>
+            </div>
+          </div>
+          <div class="party-badge">Новые люди</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="tapCount">0</div>
+            <div class="stat-label">Очки влияния</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="multiplierDisplay">1.0</div>
+            <div class="stat-label">За 1 тап</div>
+          </div>
+        </div>
+        <div class="hamster-metrics">
+          <div class="metric-item">
+            <div class="metric-label">Очки за тап</div>
+            <div class="metric-value" id="quickPerTap">1.0</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">До следующего уровня</div>
+            <div class="metric-value" id="quickToLevel">1000</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">Влияние в час</div>
+            <div class="metric-value" id="quickIncomeHour">0</div>
+          </div>
+        </div>
+        <div class="row" style="margin-bottom:10px;">
+          <div class="pill" id="levelPill">⭐ Уровень 1</div>
+          <div class="pill" id="streakPill">🔥 Стрик 0</div>
+        </div>
+        <div class="pill" id="elephantLevelPill" style="width:100%; margin-bottom:10px;">🐘 Базовый слоняра</div>
+
+        <div class="energy-wrap">
+          <div class="row">
+            <div class="pill">⚡ Энергия: <span id="energyValue">1000</span>/<span id="energyMaxValue">1000</span></div>
+            <div class="small">+<span id="energyRegenValue">1</span>/сек</div>
+          </div>
+          <div class="progress"><div id="energyFill" class="progress-fill"></div></div>
+        </div>
+
+        <div class="tap-hero">
+          <button id="tapBtn" class="tap-button"><span>🐘</span></button>
+          <div class="tap-hint">Тапай слона и усиливай влияние</div>
+        </div>
+
+        <div class="center-balance">
+          <div class="center-balance-value" id="centerBalanceValue">0</div>
+          <div class="center-balance-label">Очки влияния</div>
+        </div>
+
+        <div class="next-level-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <span style="font-weight:700;">До следующего уровня</span>
+            <b id="remainingToNext">1000</b>
+          </div>
+          <div class="small" id="levelProgressPercent" style="margin-top:6px;">Прогресс: 0%</div>
+          <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+        </div>
+        <div class="bonus-card">
+          <div class="title" style="font-size:15px; margin-bottom:6px;">🎁 Ежедневный бонус</div>
+          <div class="small" style="margin-bottom:8px;">Ежедневная активность</div>
+          <button id="dailyBonusBtn" class="btn" style="width:100%;">+100 000 влияния</button>
+        </div>
+
+        <div id="doubleTimer" class="pill small" style="display:none; width:100%;"></div>
+      </div>
+    </div>
+
+    <!-- BOOSTS -->
+    <div id="boostsTab" class="tab-view">
+      <div class="card">
+        <div class="boost-tabs">
+          <div class="boost-tab">Рынок</div>
+          <div class="boost-tab">Команда</div>
+          <div class="boost-tab">Юристы</div>
+          <div class="boost-tab">Спец</div>
+        </div>
+        <div class="title">⚡ Временный бонус</div>
+        <div class="list-item">
+          <div>
+            <div style="font-weight:800;">Удвоение x2</div>
+            <div class="small">За подписку на канал</div>
+          </div>
+          <button id="subscribeBtn" class="btn">Подписаться</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="title">📈 Улучшения</div>
+        <div id="upgradesList"></div>
+      </div>
+      <div class="card">
+        <div class="title">⚡ Энергия</div>
+        <div id="energyUpgradesList"></div>
+      </div>
+      <div class="card">
+        <div class="title">📋 Миссии</div>
+        <div class="tasks-section-title">Daily</div>
+        <div id="dailyTasksList"></div>
+        <div class="tasks-section-title">Weekly</div>
+        <div id="weeklyTasksList"></div>
+      </div>
+    </div>
+
+    <!-- RATING -->
+    <div id="ratingTab" class="tab-view">
+      <div class="card">
+        <div class="title">🏆 Рейтинг партий</div>
+        <div class="list-item"><span>Твои очки</span><b id="newPeopleScore">0</b></div>
+        <div id="factionPill" class="pill" style="width:100%; margin-bottom:8px; border-color: rgba(45,198,198,.55); background: rgba(45,198,198,.18);">🤝 Наша партия: 🆕 Новые люди</div>
+        <div id="currentBossPill" class="pill" style="width:100%; margin-bottom:8px;">Текущий босс: —</div>
+        <div class="small" id="partyPlaceText">Место в рейтинге партий: —</div>
+        <div class="small" id="factionProgressText">До следующего босса: 0</div>
+        <div class="progress"><div id="factionProgressFill" class="progress-fill"></div></div>
+        <div class="small" style="margin-top:10px;">Рейтинг партий (обновляется)</div>
+        <div id="partyRatingList" style="margin-top:8px;"></div>
+      </div>
+      <div class="card">
+        <div class="title">Топ-15</div>
+        <div id="leaderboardList"></div>
+      </div>
+    </div>
+
+    <!-- FRIENDS -->
+    <div id="friendsTab" class="tab-view">
+      <div class="card">
+        <div class="title">🎁 Пригласи друзей</div>
+        <div class="list-item"><span>Рефералов</span><b id="referralCount">0</b></div>
+        <div class="small" style="margin:4px 0 10px;">За каждого реферала +5</div>
+        <button id="inviteFriendsBtn" class="btn" style="width:100%; margin-bottom:10px;">Пригласить друга</button>
+        <div class="small" style="margin-bottom:8px;">💰 Награда: +5 за каждого приглашённого друга</div>
+        <div class="small">В игре</div>
+        <div id="referralsList" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="profileTab" class="tab-view">
+      <div class="card">
+        <div class="row" style="justify-content:flex-start; gap:12px; margin-bottom:12px;">
+          <div id="profileAvatar" class="pill" style="width:52px; height:52px; border-radius:50%; font-size:22px;">🐘</div>
+          <div id="profileName" style="font-size:18px; font-weight:800;">Загрузка...</div>
+        </div>
+        <div class="list-item"><span>Всего тапов</span><b id="profileTaps">0</b></div>
+        <div id="achievementsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" data-tab="tap"><span class="nav-icon">🐘</span><span>Тап</span></button>
+    <button class="nav-item" data-tab="boosts"><span class="nav-icon">⚡</span><span>Улучшения</span></button>
+    <button class="nav-item" data-tab="rating"><span class="nav-icon">🏆</span><span>Рейтинг партий</span></button>
+    <button class="nav-item" data-tab="friends"><span class="nav-icon">🎁</span><span>Друзья</span></button>
+    <button class="nav-item" data-tab="profile"><span class="nav-icon">👤</span><span>Профиль</span></button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.enableClosingConfirmation();
+    tg.MainButton.hide();
+
+    const BACKEND_BASE_URL = 'https://tap-backend-ivm6.onrender.com'; // <- замени на свой backend
+    const API = {
+      report: `${BACKEND_BASE_URL}/api/party-taps/report`,
+      me: `${BACKEND_BASE_URL}/api/me/new-people-faction`,
+      top: `${BACKEND_BASE_URL}/api/leaderboard/new-people?limit=15`,
+      refs: `${BACKEND_BASE_URL}/api/referrals/me`,
+      subCheck: `${BACKEND_BASE_URL}/api/check-subscription`,
+      registerReferral: `${BACKEND_BASE_URL}/api/referrals/register`,
+      createInvite: `${BACKEND_BASE_URL}/api/referrals/invite`
+    };
+
+    const user = tg.initDataUnsafe?.user;
+    const userId = user?.id ? String(user.id) : 'guest';
+    const userName = user ? `${user.first_name || 'Пользователь'}${user.last_name ? ' ' + user.last_name : ''}` : 'Гость';
+    const startParam = tg.initDataUnsafe?.start_param;
+
+    // Регистрация реферала при старте мини-приложения (с защитой от дублей)
+    async function registerStartParamReferral() {
+      if (!startParam) return;
+      if (!startParam.startsWith('invite_') && !startParam.startsWith('ref_')) return;
+      const refRegKey = `refReg:${userId}:${startParam}`;
+      if (localStorage.getItem(refRegKey) === '1') return;
+      const payload = { userId, userName, startParam };
+      if (startParam.startsWith('ref_')) {
+        const referrerId = startParam.slice(4);
+        if (!referrerId || referrerId === userId) return;
+        payload.referrerId = referrerId;
+      }
+      try {
+        const r = await fetch(API.registerReferral, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!r.ok) return;
+        localStorage.setItem(refRegKey, '1');
+      } catch (_) {}
+    }
+
+    const state = {
+      taps: 0,
+      totalEarned: 0,
+      baseMultiplier: 1,
+      purchasedUpgrades: [],
+      doubleActive: false,
+      doubleEndTime: 0,
+      energy: 1000,
+      energyLastUpdate: Date.now(),
+      purchasedEnergyUpgrades: [],
+      referralsClaimed: 0,
+      streakDays: 0,
+      streakLastDay: ''
+    };
+
+    const thresholds = [
+      { value: 1000, bonus: 1, name: '1 000 тапов' },
+      { value: 100000, bonus: 1, name: '100 000 тапов' },
+      { value: 1000000, bonus: 1, name: '1 000 000 тапов' },
+      { value: 100000000, bonus: 1, name: '100 000 000 тапов' }
+    ];
+    const elephantLevels = [
+      { min: 0, label: 'Базовый слоняра', icon: '🐘' },
+      { min: 1000, label: 'Слоняра средний', icon: '🐘✨' },
+      { min: 100000, label: 'Слоняра высший', icon: '🐘👑' },
+      { min: 1000000, label: 'Слоняра легендарный', icon: '🐘🏆' }
+    ];
+    const factionLevels = [
+      { min: 0, name: 'Новые люди', icon: '🆕' },
+      { min: 1000000, name: 'Справедливая Россия', icon: '🇷🇺' },
+      { min: 10000000, name: 'Яблоко', icon: '🍏' },
+      { min: 100000000, name: 'КПРФ', icon: '🌹' },
+      { min: 500000000, name: 'ЛДПР', icon: '🦁' },
+      { min: 1500000000000, name: 'Единая Россия', icon: '👑' }
+    ];
+    const PARTY_SEASON_START_UTC = '2026-03-30T00:00:00Z';
+    const DAILY_RIVAL_GROWTH = 500000;
+    const rivalParties = [
+      { name: 'КПРФ', icon: '🌹', baseScore: 1500000 },
+      { name: 'ЛДПР', icon: '🦁', baseScore: 1300000 },
+      { name: 'Единая Россия', icon: '👑', baseScore: 1800000 },
+      { name: 'Справедливая Россия', icon: '🇷🇺', baseScore: 1100000 },
+      { name: 'Яблоко', icon: '🍏', baseScore: 1000000 }
+    ];
+    const upgrades = [
+      { id: 0, price: 100, bonus: 0.1, name: 'x1.1', desc: '+0.1 к множителю' },
+      { id: 1, price: 500, bonus: 0.1, name: 'x1.2', desc: '+0.1 к множителю' },
+      { id: 2, price: 1000, bonus: 0.1, name: 'x1.3', desc: '+0.1 к множителю' },
+      { id: 3, price: 5000, bonus: 0.1, name: 'x1.4', desc: '+0.1 к множителю' },
+      { id: 4, price: 25000, bonus: 0.1, name: 'x1.5', desc: '+0.1 к множителю' }
+    ];
+    const energyUpgrades = [
+      { id: 0, price: 2000, addMax: 500, addRegen: 0, name: 'Макс +500' },
+      { id: 1, price: 7000, addMax: 0, addRegen: 1, name: 'Реген +1/с' },
+      { id: 2, price: 20000, addMax: 1000, addRegen: 0, name: 'Макс +1000' },
+      { id: 3, price: 45000, addMax: 0, addRegen: 2, name: 'Реген +2/с' }
+    ];
+    const tasks = [
+      { id: 'subscribe', group: 'daily', title: 'Подпишись на канал', desc: 'Бонус x2 на 30 секунд', icon: '⚡', reward: 0, progress: () => completedTasks.subscribe ? 1 : 0 },
+      { id: 't1', group: 'daily', title: 'Тапни 1000 раз', desc: 'Награда +50', icon: '🐘', cond: () => state.taps >= 1000, reward: 50, progress: () => Math.min(1, state.taps / 1000) },
+      { id: 't2', group: 'daily', title: 'Купи 2 апгрейда', desc: 'Награда +100', icon: '📈', cond: () => state.purchasedUpgrades.length >= 2, reward: 100, progress: () => Math.min(1, state.purchasedUpgrades.length / 2) },
+      { id: 'w1', group: 'weekly', title: 'Пригласи друга', desc: 'Награда +200', icon: '👥', cond: () => state.referralsClaimed >= 1, reward: 200, progress: () => Math.min(1, state.referralsClaimed / 1) }
+    ];
+    const completedTasks = {};
+
+    const $ = (id) => document.getElementById(id);
+    const tapBtn = $('tapBtn');
+
+    function formatNumber(n) {
+      const x = Math.round(Number(n) || 0);
+      if (x >= 1e9) return Math.round(x / 1e9) + 'B';
+      if (x >= 1e6) return Math.round(x / 1e6) + 'M';
+      if (x >= 1e3) return Math.round(x / 1e3) + 'K';
+      return String(x);
+    }
+    function save() {
+      localStorage.setItem('tapElephant', JSON.stringify({ state, completedTasks }));
+    }
+    function load() {
+      try {
+        const raw = localStorage.getItem('tapElephant');
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (data.state) Object.assign(state, data.state);
+        if (data.completedTasks) Object.assign(completedTasks, data.completedTasks);
+      } catch (_) {}
+    }
+    function dayKey(ts = Date.now()) {
+      const d = new Date(ts);
+      return `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`;
+    }
+    function updateStreak() {
+      const today = dayKey();
+      if (state.streakLastDay === today) return;
+      const yesterday = dayKey(Date.now() - 86400000);
+      if (state.streakLastDay === yesterday) state.streakDays = Math.max(1, (state.streakDays || 0) + 1);
+      else state.streakDays = 1;
+      state.streakLastDay = today;
+    }
+    function totalMult() {
+      let up = 0;
+      for (const id of state.purchasedUpgrades) {
+        const u = upgrades.find(x => x.id === id);
+        if (u) up += u.bonus;
+      }
+      const streakBonus = Math.min(1, (state.streakDays || 0) * 0.05);
+      return Math.max(1, state.baseMultiplier + up + streakBonus);
+    }
+    function passivePerSec() {
+      return Math.max(0, Math.floor(state.purchasedUpgrades.length * 0.5));
+    }
+    function getEnergyMax() {
+      let extra = 0;
+      for (const id of state.purchasedEnergyUpgrades) {
+        const u = energyUpgrades.find(x => x.id === id);
+        if (u) extra += u.addMax || 0;
+      }
+      return 1000 + extra;
+    }
+    function getEnergyRegen() {
+      let extra = 0;
+      for (const id of state.purchasedEnergyUpgrades) {
+        const u = energyUpgrades.find(x => x.id === id);
+        if (u) extra += u.addRegen || 0;
+      }
+      return 1 + extra;
+    }
+    function replenishEnergy() {
+      const now = Date.now();
+      const dt = Math.max(0, (now - (state.energyLastUpdate || now)) / 1000);
+      state.energyLastUpdate = now;
+      state.energy = Math.min(getEnergyMax(), Math.floor((state.energy || 0) + dt * getEnergyRegen()));
+    }
+    function checkThresholds() {
+      let b = 1;
+      for (const th of thresholds) {
+        if (state.taps >= th.value) b += th.bonus; else break;
+      }
+      state.baseMultiplier = b;
+    }
+    function elephantLevel() {
+      let c = elephantLevels[0];
+      for (const lv of elephantLevels) if (state.taps >= lv.min) c = lv;
+      return c;
+    }
+    function nextElephant() {
+      for (const lv of elephantLevels) if (state.taps < lv.min) return lv;
+      return null;
+    }
+    function seasonDaysPassed() {
+      const startMs = new Date(PARTY_SEASON_START_UTC).getTime();
+      const nowMs = Date.now();
+      if (!Number.isFinite(startMs) || nowMs <= startMs) return 0;
+      return Math.floor((nowMs - startMs) / 86400000);
+    }
+    function buildPartyScores(newPeopleScore) {
+      const days = seasonDaysPassed();
+      const parties = [{ name: 'Новые люди', icon: '🆕', score: Math.max(0, Math.round(Number(newPeopleScore) || 0)) }];
+      for (const p of rivalParties) {
+        parties.push({
+          name: p.name,
+          icon: p.icon,
+          score: Math.max(0, Math.round(p.baseScore + days * DAILY_RIVAL_GROWTH))
+        });
+      }
+      return parties.sort((a, b) => b.score - a.score);
+    }
+    function renderPartyRating(parties) {
+      const box = $('partyRatingList');
+      if (!box) return;
+      const newPeopleIdx = parties.findIndex((p) => p.name === 'Новые люди');
+      const place = newPeopleIdx >= 0 ? newPeopleIdx + 1 : parties.length;
+      $('partyPlaceText').textContent = `Место в рейтинге партий: ${place} из ${parties.length}`;
+      box.innerHTML = parties.map((p, i) => {
+        const isUs = p.name === 'Новые люди';
+        return `<div class="list-item" ${isUs ? 'style="border-color: rgba(45,198,198,.55); background: rgba(45,198,198,.14);"' : ''}>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="pill" style="min-width:34px; padding:4px 8px;">${i + 1}</div>
+            <span>${p.icon} ${p.name}${isUs ? ' (мы)' : ''}</span>
+          </div>
+          <b style="color:#2dc6c6;">${formatNumber(p.score)}</b>
+        </div>`;
+      }).join('');
+    }
+    function showFloat(text, color) {
+      const d = document.createElement('div');
+      d.className = 'float-number';
+      d.textContent = text;
+      if (color) d.style.color = color;
+      const r = tapBtn.getBoundingClientRect();
+      d.style.left = (r.left + r.width / 2 - 20) + 'px';
+      d.style.top = (r.top + r.height / 2 - 20) + 'px';
+      document.body.appendChild(d);
+      setTimeout(() => d.remove(), 600);
+    }
+    function burstParticles() {
+      const r = tapBtn.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      for (let i = 0; i < 5; i++) {
+        const p = document.createElement('div');
+        p.className = 'tap-particle';
+        p.style.left = `${cx + (Math.random() * 20 - 10)}px`;
+        p.style.top = `${cy + (Math.random() * 20 - 10)}px`;
+        p.style.setProperty('--tx', `${Math.random() * 70 - 35}px`);
+        p.style.setProperty('--ty', `${-18 - Math.random() * 45}px`);
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 560);
+      }
+    }
+    function updateUI() {
+      replenishEnergy();
+      $('tapCount').textContent = formatNumber(state.taps);
+      $('centerBalanceValue').textContent = formatNumber(state.taps);
+      $('multiplierDisplay').textContent = totalMult().toFixed(1);
+      $('quickPerTap').textContent = totalMult().toFixed(1);
+      $('profileTaps').textContent = formatNumber(state.taps);
+      $('profileName').textContent = userName;
+      $('profileAvatar').textContent = '🐘';
+      $('levelPill').textContent = `⭐ Уровень ${state.purchasedUpgrades.length + 1}`;
+      $('streakPill').textContent = `🔥 Стрик ${state.streakDays || 0}`;
+
+      const lv = elephantLevel();
+      $('elephantLevelPill').textContent = `${lv.icon} ${lv.label}`;
+      const lvIndex = elephantLevels.findIndex((x) => x.min === lv.min);
+      const glow = 0.32 + Math.max(0, lvIndex) * 0.08;
+      tapBtn.style.boxShadow = `0 16px 0 rgba(16,122,132,.34), 0 30px 62px rgba(34,184,215,${Math.min(0.62, glow).toFixed(2)}), inset 0 -12px 18px rgba(0,0,0,.08)`;
+
+      const next = nextElephant();
+      if (next) {
+        const prevMin = lv.min;
+        const remain = next.min - state.taps;
+        $('remainingToNext').textContent = formatNumber(remain);
+        $('quickToLevel').textContent = formatNumber(remain);
+        const p = Math.max(0, Math.min(100, ((state.taps - prevMin) / (next.min - prevMin)) * 100));
+        $('progressFill').style.width = p + '%';
+        tapBtn.style.setProperty('--ring', p + '%');
+        $('levelProgressPercent').textContent = `Прогресс: ${Math.round(p)}%`;
+      } else {
+        $('remainingToNext').textContent = '0';
+        $('quickToLevel').textContent = '0';
+        $('progressFill').style.width = '100%';
+        tapBtn.style.setProperty('--ring', '100%');
+        $('levelProgressPercent').textContent = 'Прогресс: 100%';
+      }
+
+      const em = getEnergyMax();
+      const er = getEnergyRegen();
+      $('quickIncomeHour').textContent = formatNumber(passivePerSec() * 3600);
+      $('energyValue').textContent = formatNumber(state.energy);
+      $('energyMaxValue').textContent = formatNumber(em);
+      $('energyRegenValue').textContent = formatNumber(er);
+      $('energyFill').style.width = (em ? (state.energy / em) * 100 : 0) + '%';
+
+      if (state.doubleActive) {
+        const s = Math.ceil((state.doubleEndTime - Date.now()) / 1000);
+        if (s <= 0) {
+          state.doubleActive = false;
+          $('doubleTimer').style.display = 'none';
+        } else {
+          $('doubleTimer').style.display = 'inline-flex';
+          $('doubleTimer').textContent = `⚡ x2 активен: ${s} сек`;
+        }
+      } else {
+        $('doubleTimer').style.display = 'none';
+      }
+
+      renderUpgrades();
+      renderEnergyUpgrades();
+      renderTasks();
+      renderAchievements();
+      save();
+    }
+
+    function renderUpgrades() {
+      let html = '';
+      for (const up of upgrades) {
+        const bought = state.purchasedUpgrades.includes(up.id);
+        const canBuy = state.taps >= up.price;
+        html += `<div class="list-item">
+          <div><div style="font-weight:800;">${up.name}</div><div class="small">${up.desc}</div></div>
+          ${bought
+            ? '<button class="btn disabled" disabled>Куплено</button>'
+            : `<button class="btn ${canBuy ? '' : 'disabled'}" data-up="${up.id}" ${canBuy ? '' : 'disabled'}>${formatNumber(up.price)}</button>`}
+        </div>`;
+      }
+      $('upgradesList').innerHTML = html;
+      $('upgradesList').querySelectorAll('button[data-up]').forEach(btn => {
+        btn.onclick = () => {
+          const id = parseInt(btn.getAttribute('data-up'), 10);
+          const up = upgrades.find(x => x.id === id);
+          if (!up || state.purchasedUpgrades.includes(id) || state.taps < up.price) return;
+          state.taps -= up.price;
+          state.purchasedUpgrades.push(id);
+          showFloat(`Куплено ${up.name}`, '#2dc6c6');
+          updateUI();
+        };
+      });
+    }
+    function renderEnergyUpgrades() {
+      let html = '';
+      for (const up of energyUpgrades) {
+        const bought = state.purchasedEnergyUpgrades.includes(up.id);
+        const canBuy = state.taps >= up.price;
+        html += `<div class="list-item">
+          <div><div style="font-weight:800;">${up.name}</div><div class="small">Цена: ${formatNumber(up.price)}</div></div>
+          ${bought
+            ? '<button class="btn disabled" disabled>Куплено</button>'
+            : `<button class="btn ${canBuy ? '' : 'disabled'}" data-eup="${up.id}" ${canBuy ? '' : 'disabled'}>Купить</button>`}
+        </div>`;
+      }
+      $('energyUpgradesList').innerHTML = html;
+      $('energyUpgradesList').querySelectorAll('button[data-eup]').forEach(btn => {
+        btn.onclick = () => {
+          const id = parseInt(btn.getAttribute('data-eup'), 10);
+          const up = energyUpgrades.find(x => x.id === id);
+          if (!up || state.purchasedEnergyUpgrades.includes(id) || state.taps < up.price) return;
+          state.taps -= up.price;
+          state.purchasedEnergyUpgrades.push(id);
+          replenishEnergy();
+          updateUI();
+        };
+      });
+    }
+    function renderTasks() {
+      let dailyHtml = '';
+      let weeklyHtml = '';
+      for (const t of tasks) {
+        const done = !!completedTasks[t.id];
+        const canClaim = t.cond ? t.cond() : false;
+        const progress = Math.max(0, Math.min(1, t.progress ? t.progress() : (done ? 1 : 0)));
+        let action = '';
+        if (done) action = '<button class="btn disabled" disabled>Выполнено</button>';
+        else if (t.id === 'subscribe') action = '<button class="btn" data-task="subscribe">Проверить</button>';
+        else if (canClaim) action = `<button class="btn" data-task="${t.id}">Забрать</button>`;
+        else action = '<button class="btn disabled" disabled>Скоро</button>';
+        const rowHtml = `<div class="list-item task-row ${done ? 'task-done' : ''} ${(!done && !canClaim && progress < 1 && t.id !== 'subscribe') ? 'task-locked' : ''}">
+          <div class="task-meta">
+            <div style="font-weight:800;">${t.icon} ${t.title}</div>
+            <div class="small">${t.desc}</div>
+            <div class="task-progress"><div class="task-progress-fill" style="width:${Math.round(progress * 100)}%"></div></div>
+            <div class="task-reward">${t.reward ? `+${t.reward}` : 'x2'}</div>
+          </div>
+          ${action}
+        </div>`;
+        if (t.group === 'weekly') weeklyHtml += rowHtml;
+        else dailyHtml += rowHtml;
+      }
+      $('dailyTasksList').innerHTML = dailyHtml || '<div class="list-item"><span class="small">Ежедневные задания скоро</span></div>';
+      $('weeklyTasksList').innerHTML = weeklyHtml || '<div class="list-item"><span class="small">Недельные задания скоро</span></div>';
+      document.querySelectorAll('#dailyTasksList button[data-task], #weeklyTasksList button[data-task]').forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.getAttribute('data-task');
+          if (id === 'subscribe') return handleSubscribeTask();
+          const t = tasks.find(x => x.id === id);
+          if (!t || completedTasks[id] || !t.cond || !t.cond()) return;
+          completedTasks[id] = true;
+          state.taps += Math.round(t.reward || 0);
+          state.totalEarned += Math.round(t.reward || 0);
+          showFloat(`+${t.reward}`, '#2dc6c6');
+          queueScoreSync();
+          updateUI();
+        };
+      });
+    }
+    function renderAchievements() {
+      let html = '<div class="title" style="font-size:15px; margin:8px 0;">Достижения</div>';
+      for (const th of thresholds) {
+        const ok = state.taps >= th.value;
+        html += `<div class="list-item"><span>${ok ? '✅' : '🔒'} ${th.name}</span></div>`;
+      }
+      $('achievementsList').innerHTML = html;
+    }
+
+    // --- Backend sync (score + rating) ---
+    let scoreSyncTimer = null;
+    let lastReported = -1;
+    async function sendScore() {
+      if (!API.me) return;
+      const val = Math.round(state.totalEarned || 0);
+      if (val === lastReported) return;
+      const payload = { user_id: userId, user_name: userName, taps: val, multiplier: totalMult() };
+      const r = await fetch(API.me, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      lastReported = val;
+    }
+    function queueScoreSync() {
+      if (scoreSyncTimer) return;
+      scoreSyncTimer = setTimeout(async () => {
+        scoreSyncTimer = null;
+        try { await sendScore(); } catch (_) {}
+      }, 1200);
+    }
+    async function loadRating() {
+      const box = $('leaderboardList');
+      box.innerHTML = '<div class="list-item">Загрузка...</div>';
+      try {
+        const r = await fetch(API.top, { method: 'GET' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        const list = Array.isArray(d) ? d : (d.top || d.rows || d.users || []);
+        const me = list.find(x => String(x.user_id ?? x.userId ?? x.id) === String(userId));
+        const myScore = Number(me?.taps ?? me?.score ?? me?.newPeopleScore ?? 0);
+        $('newPeopleScore').textContent = formatNumber(myScore);
+        const partyScoreFromApi = Number(d?.partyScore ?? d?.newPeopleScore ?? d?.totalScore ?? d?.allTaps ?? 0);
+        const newPeoplePartyScore = partyScoreFromApi > 0
+          ? partyScoreFromApi
+          : list.reduce((acc, row) => acc + Number(row.taps ?? row.score ?? row.newPeopleScore ?? 0), 0);
+        const parties = buildPartyScores(newPeoplePartyScore);
+        const myPartyPos = parties.findIndex((p) => p.name === 'Новые люди');
+        const higher = myPartyPos > 0 ? parties[myPartyPos - 1] : null;
+        const currentOpp = higher || parties[myPartyPos] || { icon: '🆕', name: 'Новые люди', score: newPeoplePartyScore };
+        $('factionPill').textContent = '🤝 Наша партия: 🆕 Новые люди';
+        $('currentBossPill').textContent = `🛡️ Ближайший соперник: ${currentOpp.icon} ${currentOpp.name}`;
+        renderPartyRating(parties);
+        if (higher) {
+          const gap = Math.max(0, higher.score - newPeoplePartyScore);
+          const p = Math.max(0, Math.min(100, (newPeoplePartyScore / Math.max(higher.score, 1)) * 100));
+          $('factionProgressFill').style.width = p + '%';
+          $('factionProgressText').textContent = `До следующего места (${higher.icon} ${higher.name}): ${formatNumber(gap)}`;
+        } else {
+          $('factionProgressFill').style.width = '100%';
+          $('factionProgressText').textContent = 'Новые люди на 1 месте!';
+        }
+
+        if (!list.length) {
+          box.innerHTML = '<div class="list-item">Пока нет данных</div>';
+          return;
+        }
+        box.innerHTML = list.slice(0, 15).map((row, i) => {
+          const uid = row.user_id ?? row.userId ?? row.id;
+          const name = row.user_name ?? row.name ?? (row.username ? '@' + row.username : 'Игрок');
+          const score = row.taps ?? row.score ?? row.newPeopleScore ?? 0;
+          const meMark = String(uid) === String(userId) ? ' (ты)' : '';
+          const rankClass = i === 0 ? ' rank-1' : (i === 1 ? ' rank-2' : (i === 2 ? ' rank-3' : ''));
+          const cls = i < 3 ? `list-item top-glow${rankClass}` : 'list-item';
+          return `<div class="${cls}" ${meMark ? 'style="border-color: rgba(45,198,198,.55); background: rgba(45,198,198,.1);"' : ''}>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <div class="pill" style="min-width:34px; padding:4px 8px;">${i+1}</div>
+              <div>${escapeHtml(String(name))}${meMark}</div>
+            </div>
+            <b style="color:#2dc6c6;">${formatNumber(score)}</b>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        box.innerHTML = `<div class="list-item">Ошибка загрузки: ${escapeHtml(String(e.message || e))}</div>`;
+      }
+    }
+
+    // --- Friends + subscribe ---
+    function setSubscribeButtonState() {
+      const done = !!completedTasks.subscribe;
+      const btn = $('subscribeBtn');
+      if (btn) {
+        btn.textContent = done ? 'Выполнено' : 'Подписаться';
+        btn.disabled = done;
+        btn.classList.toggle('disabled', done);
+      }
+    }
+    async function handleSubscribeTask() {
+      if (completedTasks.subscribe) return;
+      tg.openTelegramLink('https://t.me/newpeople_vologda');
+      const btn = $('subscribeBtn');
+      if (btn) {
+        btn.textContent = 'Проверяется...';
+        btn.disabled = true;
+      }
+      showFloat('Проверяю подписку...', '#fff');
+      for (let i = 0; i < 4; i++) {
+        await new Promise(r => setTimeout(r, 1300 + i * 900));
+        try {
+          const username = 'newpeople_vologda';
+          const r = await fetch(API.subCheck, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, channelUsername: username })
+          });
+          const d = await r.json();
+          if (d?.subscribed || d?.ok || d?.result?.subscribed) {
+            completedTasks.subscribe = true;
+            state.doubleActive = true;
+            state.doubleEndTime = Date.now() + 30000;
+            showFloat('Подписка подтверждена! x2', '#2dc6c6');
+            setSubscribeButtonState();
+            return updateUI();
+          }
+        } catch (_) {}
+      }
+      if (btn && !completedTasks.subscribe) {
+        btn.textContent = 'Подписаться';
+        btn.disabled = false;
+      }
+      showFloat('Не вижу подписку, бонус не выдан', '#fff');
+    }
+
+    async function loadFriends() {
+      $('referralCount').textContent = formatNumber(state.referralsClaimed);
+      const box = $('referralsList');
+      box.innerHTML = '<div class="list-item">Загрузка...</div>';
+      try {
+        const r = await fetch(API.refs, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        const active = d.referralsActive || d.friendsActive || d.referralsInGame || d.friendsInGame || [];
+        const pending = d.referralsPending || d.friendsPending || d.referralsNotInGame || d.friendsNotInGame || [];
+        const fallbackList = Array.isArray(d.referrals) ? d.referrals : [];
+        const activeList = active.length ? active : fallbackList.filter(x => x.status === 'active' || x.in_game === 1);
+        const pendingList = pending.length ? pending : fallbackList.filter(x => x.status === 'pending' || x.in_game === 0);
+        if (typeof d.referralsClaimed === 'number') state.referralsClaimed = d.referralsClaimed;
+
+        // Начисляем награды за рефералов, если сервер прислал awards
+        if (d.awards && Array.isArray(d.awards) && d.awards.length) {
+          let totalBonus = 0;
+          for (const award of d.awards) totalBonus += Number(award.taps || 0);
+          totalBonus = Math.round(totalBonus);
+          if (totalBonus > 0) {
+            state.taps += totalBonus;
+            state.totalEarned += totalBonus;
+            updateUI();
+            queueScoreSync();
+          }
+        }
+
+        $('referralCount').textContent = formatNumber(state.referralsClaimed);
+        if (!activeList.length && !pendingList.length) {
+          box.innerHTML = '<div class="list-item">Пока нет друзей в игре</div>';
+          return;
+        }
+        box.innerHTML = [
+          ...activeList.map((u, idx) => `<div class="list-item"><span>✅ ${escapeHtml(u.name || u.user_name || u.referred_name || u.username || ('Друг #' + (idx + 1)))}</span><b>+5</b></div>`),
+          ...pendingList.map((u, idx) => `<div class="list-item"><span>⏳ ${escapeHtml(u.name || u.user_name || u.referred_name || u.username || ('Друг #' + (idx + 1)))}</span><span class="small">ожидает</span></div>`)
+        ].join('');
+      } catch (e) {
+        box.innerHTML = '<div class="list-item">Не удалось загрузить друзей</div>';
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"]/g, ch => ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : '&quot;');
+    }
+
+    function onTap() {
+      replenishEnergy();
+      if (state.energy < 1) {
+        showFloat('Энергия закончилась');
+        return updateUI();
+      }
+      state.energy -= 1;
+      state.energyLastUpdate = Date.now();
+
+      let p = totalMult();
+      if (state.doubleActive) p *= 2;
+      const gained = Math.round(p);
+      state.taps += gained;
+      state.totalEarned += gained;
+      checkThresholds();
+      queueScoreSync();
+      updateUI();
+
+      if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+      showFloat(`+${gained}`);
+      burstParticles();
+      tapBtn.classList.remove('tap-pulse');
+      tapBtn.classList.add('tap-pulse');
+      setTimeout(() => tapBtn.classList.remove('tap-pulse'), 240);
+    }
+    function gameTick() {
+      replenishEnergy();
+      const passive = passivePerSec();
+      if (passive > 0) {
+        state.taps += passive;
+        state.totalEarned += passive;
+        queueScoreSync();
+      }
+      updateUI();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+      $(`${tab}Tab`).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
+      if (tab === 'rating') loadRating();
+      if (tab === 'friends') loadFriends();
+      if (tab === 'profile') renderAchievements();
+    }
+
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+    });
+    $('closeAppBtn').addEventListener('click', () => {
+      try { tg.close(); } catch (_) {}
+    });
+    $('dailyBonusBtn').addEventListener('click', () => {
+      const key = `dailyBonus:${userId}:${dayKey()}`;
+      if (localStorage.getItem(key) === '1') {
+        showFloat('Бонус уже получен сегодня');
+        return;
+      }
+      const bonus = 100000;
+      state.taps += bonus;
+      state.totalEarned += bonus;
+      localStorage.setItem(key, '1');
+      showFloat('+100000 влияние', '#00C2B8');
+      queueScoreSync();
+      updateUI();
+    });
+    $('subscribeBtn').addEventListener('click', handleSubscribeTask);
+    $('inviteFriendsBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch(API.createInvite, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referrerId: userId, referrerName: userName })
+        });
+        const data = await response.json();
+        if (data.ok && data.inviteLink) {
+          tg.openTelegramLink(
+            `https://t.me/share/url?url=${encodeURIComponent(data.inviteLink)}&text=${encodeURIComponent('Присоединяйся к Tap Elephant!')}`
+          );
+        } else {
+          throw new Error('No invite link');
+        }
+      } catch (err) {
+        console.error(err);
+        // fallback на старый формат
+        const ref = `ref_${userId}`;
+        const url = `https://t.me/New_people_start_bot?start=${encodeURIComponent(ref)}`;
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent('Присоединяйся к Tap Elephant!')}`);
+      }
+    });
+
+    // init
+    registerStartParamReferral();
+    load();
+    updateStreak();
+    setSubscribeButtonState();
+    updateUI();
+    tapBtn.addEventListener('click', onTap);
+    setInterval(gameTick, 1000);
+    setInterval(() => {
+      const t = $('ratingTab');
+      if (t.classList.contains('active')) loadRating();
+    }, 15000);
+    tg.ready();
+    window.addEventListener('beforeunload', () => { save(); queueScoreSync(); });
+  </script>
+</body>
+</html>
